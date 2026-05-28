@@ -1,0 +1,18 @@
+{
+  "name": "Микро-осознанность",
+  "short_name": "Mindful 5",
+  "description": "5 минут, 3 шага. Дыхание, заземление, благодарность.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0F1729",
+  "theme_color": "#0F1729",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/icon-512.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

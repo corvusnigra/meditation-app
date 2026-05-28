@@ -1,0 +1,168 @@
+{
+  "version": "1.0.0",
+  "lastScanned": 1779895398955,
+  "projectRoot": "/Users/moi/meditation-app",
+  "techStack": {
+    "languages": [
+      {
+        "name": "JavaScript/TypeScript",
+        "version": null,
+        "confidence": "high",
+        "markers": [
+          "package.json"
+        ]
+      },
+      {
+        "name": "TypeScript",
+        "version": null,
+        "confidence": "high",
+        "markers": [
+          "tsconfig.json"
+        ]
+      }
+    ],
+    "frameworks": [
+      {
+        "name": "next",
+        "version": "14.2.18",
+        "category": "fullstack"
+      },
+      {
+        "name": "react",
+        "version": "18.3.1",
+        "category": "frontend"
+      },
+      {
+        "name": "react-dom",
+        "version": "18.3.1",
+        "category": "frontend"
+      }
+    ],
+    "packageManager": "pnpm",
+    "runtime": null
+  },
+  "build": {
+    "buildCommand": "pnpm build",
+    "testCommand": null,
+    "lintCommand": "pnpm lint",
+    "devCommand": "pnpm dev",
+    "scripts": {
+      "dev": "next dev",
+      "build": "next build",
+      "start": "next start",
+      "lint": "next lint",
+      "type-check": "tsc --noEmit"
+    }
+  },
+  "conventions": {
+    "namingStyle": "camelCase",
+    "importStyle": "ES modules",
+    "testPattern": null,
+    "fileOrganization": null
+  },
+  "structure": {
+    "isMonorepo": false,
+    "workspaces": [],
+    "mainDirectories": [
+      "app",
+      "components",
+      "lib",
+      "public"
+    ],
+    "gitBranches": null
+  },
+  "customNotes": [],
+  "directoryMap": {
+    "app": {
+      "path": "app",
+      "purpose": "Application code",
+      "fileCount": 4,
+      "lastAccessed": 1779895398918,
+      "keyFiles": [
+        "icon.svg",
+        "layout.tsx",
+        "page.tsx",
+        "providers.tsx"
+      ]
+    },
+    "components": {
+      "path": "components",
+      "purpose": "UI components",
+      "fileCount": 0,
+      "lastAccessed": 1779895398920,
+      "keyFiles": []
+    },
+    "context": {
+      "path": "context",
+      "purpose": null,
+      "fileCount": 4,
+      "lastAccessed": 1779895398924,
+      "keyFiles": [
+        "HistoryContext.tsx",
+        "ProgressionContext.tsx",
+        "SessionContext.tsx",
+        "SettingsContext.tsx"
+      ]
+    },
+    "hooks": {
+      "path": "hooks",
+      "purpose": null,
+      "fileCount": 8,
+      "lastAccessed": 1779895398925,
+      "keyFiles": [
+        "useBreathingAudio.ts",
+        "useBreathingCycle.ts",
+        "useHaptics.ts",
+        "useLocalStorage.ts",
+        "useProgression.ts"
+      ]
+    },
+    "lib": {
+      "path": "lib",
+      "purpose": "Library code",
+      "fileCount": 7,
+      "lastAccessed": 1779895398926,
+      "keyFiles": [
+        "audio-presets.ts",
+        "breathing-audio.ts",
+        "constants.ts",
+        "progression.ts",
+        "storage.ts"
+      ]
+    },
+    "public": {
+      "path": "public",
+      "purpose": "Public files",
+      "fileCount": 2,
+      "lastAccessed": 1779895398926,
+      "keyFiles": [
+        "icon-512.svg",
+        "manifest.json"
+      ]
+    },
+    "styles": {
+      "path": "styles",
+      "purpose": null,
+      "fileCount": 1,
+      "lastAccessed": 1779895398931,
+      "keyFiles": [
+        "globals.css"
+      ]
+    }
+  },
+  "hotPaths": [
+    {
+      "path": "lib/breathing-audio.ts",
+      "accessCount": 7,
+      "lastAccessed": 1779897453433,
+      "type": "file"
+    },
+    {
+      "path": "app/complete/page.tsx",
+      "accessCount": 3,
+      "lastAccessed": 1779897574678,
+      "type": "file"
+    }
+  ],
+  "userDirectives": []
+}
