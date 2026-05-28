@@ -1,7 +1,0 @@
-{
-  "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"ls -la .git 2>&1 | head -3; echo \\\"---\\\"; git config --get user.name 2>&1; git config --get user.email 2>&1\",\"description\":\"Check git state and user config\"}",
-  "error": "Exit code 127\nls: .git: No such file or directory\n---\n(eval):1: command not found: _lc\n(eval):1: command not found: _lc",
-  "timestamp": "2026-05-28T07:41:22.884Z",
-  "retry_count": 1
-}

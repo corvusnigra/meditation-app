@@ -9,7 +9,12 @@ type Props = {
 };
 
 export function SessionCard({ session }: Props) {
-  const minutes = Math.round(session.durationMs / 60000);
+  const minutes = Math.max(Math.round(session.durationMs / 60000), 1);
+  const isTechnique = session.kind === 'technique';
+  const seconds = Math.round(session.durationMs / 1000);
+  const durationLabel =
+    isTechnique && seconds < 90 ? `${seconds} сек` : `${minutes} мин`;
+
   return (
     <div className="rounded-2xl bg-bg-card/60 border border-white/5 p-4">
       <div className="flex items-baseline justify-between mb-1">
@@ -17,13 +22,25 @@ export function SessionCard({ session }: Props) {
           {formatLongDate(session.date)}
         </span>
         <span className="text-xs text-text-secondary">
-          {minutes} мин · {LEVEL_LABEL[session.level]}
+          {durationLabel}
+          {!isTechnique && ` · ${LEVEL_LABEL[session.level]}`}
         </span>
       </div>
-      <div className="text-xs uppercase tracking-widest text-accent-grounding mb-2">
-        {SCENARIO_LABEL[session.scenario]}
+      <div
+        className={
+          'text-xs uppercase tracking-widest mb-2 ' +
+          (isTechnique ? 'text-accent-gratitude' : 'text-accent-grounding')
+        }
+      >
+        {isTechnique
+          ? `Техника · ${session.techniqueName ?? ''}`.trim()
+          : SCENARIO_LABEL[session.scenario]}
       </div>
-      {session.gratitudeText ? (
+      {isTechnique ? (
+        <p className="text-sm text-text-secondary/80">
+          {session.techniqueName ?? 'Дыхательная техника'}
+        </p>
+      ) : session.gratitudeText ? (
         <p className="text-sm text-text-primary/80 leading-relaxed">
           «{session.gratitudeText}»
         </p>

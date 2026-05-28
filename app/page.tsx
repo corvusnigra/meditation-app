@@ -112,8 +112,31 @@ export default function HomePage() {
             </button>
           ))}
         </div>
+      </section>
+
+      <section className="mt-6 pt-6 border-t border-white/5">
+        <Link href="/techniques" className="block group">
+          <div className="rounded-2xl bg-bg-card/60 hover:bg-bg-card/80 border border-white/5 px-4 py-4 transition-colors">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-sm font-medium text-text-primary">
+                  Дыхательная техника по состоянию
+                </div>
+                <div className="text-[11px] text-text-secondary mt-1">
+                  Тревога · Сон · Фокус · Энергия
+                </div>
+              </div>
+              <span
+                aria-hidden
+                className="text-text-secondary group-hover:text-text-primary transition-colors"
+              >
+                →
+              </span>
+            </div>
+          </div>
+        </Link>
         {sessions.length > 0 && (
-          <p className="text-xs text-text-secondary text-center pt-3">
+          <p className="text-xs text-text-secondary text-center pt-4">
             Всего сессий: {sessions.length}
           </p>
         )}

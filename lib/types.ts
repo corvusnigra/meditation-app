@@ -37,6 +37,54 @@ export type CompletedSession = {
   durationMs: number;
   completedPhases: PhaseId[];
   level: ProgressionLevel;
+  kind?: 'ritual' | 'technique';
+  techniqueId?: BreathingTechniqueId;
+  techniqueName?: string;
+};
+
+export type TechniqueCategory = 'anxiety' | 'sleep' | 'focus' | 'energy';
+
+export type TechniqueKind = 'box' | 'sigh' | 'wim-hof';
+
+export type BreathingTechniqueId =
+  | 'physiological-sigh'
+  | 'relax-4-7-8'
+  | 'sleep-4-7-8'
+  | 'coherent-4-8'
+  | 'box-4-4-4-4'
+  | 'coherent-6-6'
+  | 'wim-hof';
+
+export type BoxTechniqueConfig = {
+  kind: 'box';
+  pattern: [number, number, number, number];
+  cycles: number;
+  mouthExhale?: boolean;
+};
+
+export type SighTechniqueConfig = {
+  kind: 'sigh';
+  cycles: number;
+};
+
+export type WimHofTechniqueConfig = {
+  kind: 'wim-hof';
+  rounds: number;
+  breathsPerRound: number;
+  breathCycleSec: number;
+  recoveryHoldSec: number;
+};
+
+export type BreathingTechnique = {
+  id: BreathingTechniqueId;
+  category: TechniqueCategory;
+  isPrimary: boolean;
+  name: string;
+  tagline: string;
+  description: string;
+  source?: string;
+  durationLabel: string;
+  config: BoxTechniqueConfig | SighTechniqueConfig | WimHofTechniqueConfig;
 };
 
 export type UserSettings = {
