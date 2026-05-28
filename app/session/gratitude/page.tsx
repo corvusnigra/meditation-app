@@ -24,8 +24,16 @@ export default function GratitudePage() {
   const { state: progression, durations } = useProgressionContext();
   const [showPause, setShowPause] = useState(false);
   const [showField, setShowField] = useState(false);
+  const [reachedMinimum, setReachedMinimum] = useState(false);
 
   const totalSec = durations.gratitude;
+
+  // Таймер только для прогресса минимума — не завершает сессию.
+  const timer = useTimer({
+    durationSec: totalSec,
+    autoStart: true,
+    onComplete: () => setReachedMinimum(true),
+  });
 
   const handleFinish = () => {
     const startMs = state.startedAt ? new Date(state.startedAt).getTime() : Date.now();
@@ -41,12 +49,6 @@ export default function GratitudePage() {
     advance('complete');
     router.push('/complete');
   };
-
-  const timer = useTimer({
-    durationSec: totalSec,
-    autoStart: true,
-    onComplete: handleFinish,
-  });
 
   useEffect(() => {
     if (state.status === 'idle') {
@@ -66,24 +68,30 @@ export default function GratitudePage() {
     }
   };
 
-  const handleSkip = () => {
-    setShowPause(false);
-    timer.finish();
-  };
-
   const handleExit = () => {
     setShowPause(false);
     reset();
     router.push('/');
   };
 
+  const progressForRing = reachedMinimum ? 1 : timer.progress;
+
   return (
     <PageShell>
       <div className="space-y-4">
-        <PhaseProgressBar currentPhase="gratitude" phaseProgress={timer.progress} />
+        <PhaseProgressBar
+          currentPhase="gratitude"
+          phaseProgress={progressForRing}
+        />
         <div className="flex items-center justify-between text-xs text-text-secondary">
-          <span className="uppercase tracking-widest">Anchor</span>
-          <Timer remainingSec={Math.ceil(timer.remaining)} />
+          <span className="uppercase tracking-widest">
+            {reachedMinimum ? 'Минимум пройден' : 'Anchor'}
+          </span>
+          {reachedMinimum ? (
+            <span className="text-accent-gratitude">можно записать или закончить</span>
+          ) : (
+            <Timer remainingSec={Math.ceil(timer.remaining)} />
+          )}
         </div>
       </div>
 
@@ -100,7 +108,7 @@ export default function GratitudePage() {
             value={state.gratitudeText}
             onChange={setGratitude}
             placeholder={GRATITUDE_PLACEHOLDER[state.scenario]}
-            progress={timer.progress}
+            progress={progressForRing}
           />
         ) : (
           <HapticButton
@@ -117,7 +125,12 @@ export default function GratitudePage() {
         <HapticButton variant="ghost" size="md" onClick={handlePauseToggle}>
           Пауза
         </HapticButton>
-        <HapticButton variant="primary" size="md" onClick={handleFinish} haptic="success">
+        <HapticButton
+          variant="primary"
+          size="md"
+          onClick={handleFinish}
+          haptic="success"
+        >
           Готово
         </HapticButton>
       </div>
@@ -125,7 +138,7 @@ export default function GratitudePage() {
       <PauseOverlay
         visible={showPause}
         onResume={handlePauseToggle}
-        onSkip={handleSkip}
+        onSkip={handleFinish}
         onExit={handleExit}
       />
     </PageShell>

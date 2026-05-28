@@ -107,6 +107,46 @@ export const TECHNIQUES: Record<BreathingTechniqueId, BreathingTechnique> = {
       recoveryHoldSec: 15,
     },
   },
+
+  diaphragmatic: {
+    id: 'diaphragmatic',
+    category: 'anxiety',
+    isPrimary: false,
+    name: 'Диафрагмальное дыхание',
+    tagline: 'Дышим животом, всё глубже от стадии к стадии',
+    description:
+      'Медленное брюшное дыхание. Рука на животе — он расширяется на вдохе, опускается на выдохе. Грудь почти не двигается. Каждая стадия — чуть глубже предыдущей.',
+    durationLabel: '4–5 мин',
+    config: {
+      kind: 'deepening',
+      stages: [
+        {
+          pattern: [4, 1, 5, 0],
+          cycles: 3,
+          label: 'Привыкаем',
+          hint: 'Положите руку на живот. Дышите медленно носом.',
+        },
+        {
+          pattern: [5, 1, 7, 0],
+          cycles: 3,
+          label: 'Глубже',
+          hint: 'Чувствуйте, как живот поднимается выше на вдохе.',
+        },
+        {
+          pattern: [6, 2, 9, 0],
+          cycles: 4,
+          label: 'Ещё глубже',
+          hint: 'Выдох длиннее вдоха. Не торопитесь.',
+        },
+        {
+          pattern: [7, 2, 11, 0],
+          cycles: 4,
+          label: 'Самое глубокое',
+          hint: 'Полное брюшное дыхание. Тело тяжелеет.',
+        },
+      ],
+    },
+  },
 };
 
 export const TECHNIQUES_LIST: BreathingTechnique[] = Object.values(TECHNIQUES);
