@@ -8,15 +8,30 @@ import { PageShell } from '@/components/shared/PageShell';
 import { HapticButton } from '@/components/shared/HapticButton';
 import { useSighCycle, type SighPhase } from '@/hooks/useSighCycle';
 import { useHaptics } from '@/hooks/useHaptics';
+import { useBreathingAudio } from '@/hooks/useBreathingAudio';
 import { useSettings } from '@/context/SettingsContext';
 import { useHistory } from '@/context/HistoryContext';
 import { useProgressionContext } from '@/context/ProgressionContext';
+import { ensureAudio } from '@/lib/breathing-audio';
 import type {
   BreathingTechnique,
   SighTechniqueConfig,
+  BreathingPhase,
 } from '@/lib/types';
 import { randomId } from '@/lib/utils';
 import { cn } from '@/lib/utils';
+
+const SIGH_TO_BREATHING: Record<SighPhase, BreathingPhase> = {
+  inhale1: 'inhale',
+  inhale2: 'holdIn',
+  exhale: 'exhale',
+};
+
+const SIGH_DURATION: Record<SighPhase, number> = {
+  inhale1: 1.5,
+  inhale2: 0.5,
+  exhale: 5,
+};
 
 type Props = { technique: BreathingTechnique };
 
@@ -50,6 +65,13 @@ export function SighSession({ technique }: Props) {
   const [completed, setCompleted] = useState(false);
   const startedAtRef = useRef<number | null>(null);
 
+  const audio = useBreathingAudio({
+    enabled: settings.ambientEnabled,
+    preset: settings.ambientPreset,
+    volume: settings.ambientVolume,
+    active: started && !completed,
+  });
+
   const handleComplete = () => {
     if (completed) return;
     setCompleted(true);
@@ -74,7 +96,10 @@ export function SighSession({ technique }: Props) {
   const { phase, cycleIndex, secondsInPhase, phaseDuration } = useSighCycle({
     cycles: config.cycles,
     active: started && !completed,
-    onPhaseChange: () => haptics('tap'),
+    onPhaseChange: (next) => {
+      haptics('tap');
+      audio.onPhase(SIGH_TO_BREATHING[next], SIGH_DURATION[next]);
+    },
     onComplete: handleComplete,
   });
 
@@ -116,9 +141,15 @@ export function SighSession({ technique }: Props) {
           <HapticButton
             size="lg"
             haptic="success"
-            onClick={() => {
+            onClick={async () => {
+              if (settings.ambientEnabled) {
+                await ensureAudio(settings.ambientPreset, settings.ambientVolume);
+              }
               startedAtRef.current = Date.now();
               setStarted(true);
+              if (settings.ambientEnabled) {
+                audio.onPhase('inhale', SIGH_DURATION.inhale1);
+              }
             }}
           >
             Начать

@@ -8,9 +8,11 @@ import { PageShell } from '@/components/shared/PageShell';
 import { HapticButton } from '@/components/shared/HapticButton';
 import { useWimHof, type WimHofStage } from '@/hooks/useWimHof';
 import { useHaptics } from '@/hooks/useHaptics';
+import { useBreathingAudio } from '@/hooks/useBreathingAudio';
 import { useSettings } from '@/context/SettingsContext';
 import { useHistory } from '@/context/HistoryContext';
 import { useProgressionContext } from '@/context/ProgressionContext';
+import { ensureAudio, setActive } from '@/lib/breathing-audio';
 import type {
   BreathingTechnique,
   WimHofTechniqueConfig,
@@ -138,7 +140,10 @@ export function WimHofSession({ technique }: Props) {
           size="lg"
           haptic="success"
           disabled={!acknowledgedWarning}
-          onClick={() => {
+          onClick={async () => {
+            if (settings.ambientEnabled) {
+              await ensureAudio(settings.ambientPreset, settings.ambientVolume);
+            }
             startedAtRef.current = Date.now();
             setStarted(true);
           }}
@@ -163,6 +168,16 @@ function RunningSession({
   onTap: () => void;
   router: ReturnType<typeof useRouter>;
 }) {
+  const { settings } = useSettings();
+  const halfCycle = config.breathCycleSec / 2;
+
+  const audio = useBreathingAudio({
+    enabled: settings.ambientEnabled,
+    preset: settings.ambientPreset,
+    volume: settings.ambientVolume,
+    active: true,
+  });
+
   const {
     stage,
     round,
@@ -179,8 +194,29 @@ function RunningSession({
     recoveryHoldSec: config.recoveryHoldSec,
     onStageChange: (s) => {
       if (s === 'completed') onComplete(true);
+      if (s === 'retention') {
+        if (settings.ambientEnabled) setActive(false);
+      } else if (s === 'recovery') {
+        if (settings.ambientEnabled) {
+          setActive(true);
+          audio.onPhase('holdIn', config.recoveryHoldSec);
+        }
+      } else if (s === 'breathing') {
+        if (settings.ambientEnabled) setActive(true);
+      }
     },
   });
+
+  // Pulse audio in sync with the fast breath rhythm.
+  const lastInhaleRef = useRef(breathInhale);
+  useEffect(() => {
+    if (stage !== 'breathing') return;
+    if (!settings.ambientEnabled) return;
+    if (lastInhaleRef.current !== breathInhale) {
+      lastInhaleRef.current = breathInhale;
+      audio.onPhase(breathInhale ? 'inhale' : 'exhale', halfCycle);
+    }
+  }, [breathInhale, stage, settings.ambientEnabled, audio, halfCycle]);
 
   // Force completion handler if completed at mount (safety)
   useEffect(() => {

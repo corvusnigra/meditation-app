@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { PageShell } from '@/components/shared/PageShell';
 import {
@@ -9,6 +10,8 @@ import {
   CATEGORY_TAGLINE,
   techniquesByCategory,
 } from '@/lib/breathing-techniques';
+import { ensureAudio } from '@/lib/breathing-audio';
+import { useSettings } from '@/context/SettingsContext';
 import { cn } from '@/lib/utils';
 import type { TechniqueCategory } from '@/lib/types';
 
@@ -20,6 +23,16 @@ const CATEGORY_COLOR: Record<TechniqueCategory, string> = {
 };
 
 export default function TechniquesPage() {
+  const router = useRouter();
+  const { settings } = useSettings();
+
+  const handleTechniqueClick = (id: string) => {
+    if (settings.ambientEnabled) {
+      void ensureAudio(settings.ambientPreset, settings.ambientVolume);
+    }
+    router.push(`/techniques/${id}`);
+  };
+
   return (
     <PageShell>
       <header className="flex items-center justify-between mb-6 text-sm">
@@ -76,10 +89,11 @@ export default function TechniquesPage() {
               </div>
               <div className="space-y-2">
                 {list.map((tech) => (
-                  <Link
+                  <button
                     key={tech.id}
-                    href={`/techniques/${tech.id}`}
-                    className="block rounded-2xl bg-bg-card/60 hover:bg-bg-card/80 border border-white/5 px-4 py-3 transition-colors"
+                    type="button"
+                    onClick={() => handleTechniqueClick(tech.id)}
+                    className="block w-full text-left rounded-2xl bg-bg-card/60 hover:bg-bg-card/80 border border-white/5 px-4 py-3 transition-colors"
                   >
                     <div className="flex items-center justify-between gap-3">
                       <div className="min-w-0">
@@ -109,7 +123,7 @@ export default function TechniquesPage() {
                         </span>
                       </div>
                     </div>
-                  </Link>
+                  </button>
                 ))}
               </div>
             </motion.section>
