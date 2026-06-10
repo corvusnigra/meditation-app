@@ -1,10 +1,9 @@
 import type {
   CompletedSession,
   ProgressionState,
-  SessionDraft,
   UserSettings,
 } from './types';
-import { DEFAULT_SETTINGS, STORAGE_KEYS, STORAGE_VERSION } from './constants';
+import { DEFAULT_SETTINGS, STORAGE_KEYS } from './constants';
 
 const isBrowser = (): boolean => typeof window !== 'undefined';
 
@@ -34,14 +33,6 @@ function write<T>(key: string, value: T): void {
 function remove(key: string): void {
   if (!isBrowser()) return;
   window.localStorage.removeItem(key);
-}
-
-export function ensureStorageVersion(): void {
-  if (!isBrowser()) return;
-  const current = read<number>(STORAGE_KEYS.version, 0);
-  if (current !== STORAGE_VERSION) {
-    write(STORAGE_KEYS.version, STORAGE_VERSION);
-  }
 }
 
 export const sessionsStorage = {
@@ -93,18 +84,6 @@ export const progressionStorage = {
   },
   clear(): void {
     remove(STORAGE_KEYS.progression);
-  },
-};
-
-export const draftStorage = {
-  load(): SessionDraft | null {
-    return read<SessionDraft | null>(STORAGE_KEYS.draft, null);
-  },
-  save(draft: SessionDraft): void {
-    write(STORAGE_KEYS.draft, draft);
-  },
-  clear(): void {
-    remove(STORAGE_KEYS.draft);
   },
 };
 

@@ -20,11 +20,6 @@ export function levelFromStreak(streak: number): ProgressionLevel {
   return 1;
 }
 
-export function nextLevel(level: ProgressionLevel): ProgressionLevel | null {
-  if (level >= 4) return null;
-  return (level + 1) as ProgressionLevel;
-}
-
 export function previousLevel(level: ProgressionLevel): ProgressionLevel {
   if (level <= 1) return 1;
   return (level - 1) as ProgressionLevel;

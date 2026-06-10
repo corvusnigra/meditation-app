@@ -42,7 +42,7 @@ export default function GratitudePage() {
       date: new Date().toISOString(),
       scenario: state.scenario,
       gratitudeText: state.gratitudeText.trim(),
-      durationMs: Math.max(Date.now() - startMs, durations.total * 1000),
+      durationMs: Math.max(Date.now() - startMs, 0),
       completedPhases: ['breathing', 'grounding', 'gratitude'],
       level: progression.currentLevel,
     });

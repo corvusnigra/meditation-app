@@ -67,10 +67,19 @@ export function useBreathingCycle({
 
       if (inPhase >= phaseDuration) {
         const overflow = inPhase - phaseDuration;
-        phaseIndexRef.current = (phaseIndexRef.current + 1) % PHASES.length;
-        const nextPhase = PHASES[phaseIndexRef.current] as BreathingPhase;
-        const nextDuration = patternRef.current[phaseIndexRef.current] ?? 4;
-        if (phaseIndexRef.current === 0) {
+        // Фазы нулевой длины (например, [4,0,8,0]) пропускаем целиком,
+        // иначе они дают двойной haptic/cue и флэш подсказки.
+        let nextIdx = phaseIndexRef.current;
+        let wrapped = false;
+        for (let step = 0; step < PHASES.length; step += 1) {
+          nextIdx = (nextIdx + 1) % PHASES.length;
+          if (nextIdx === 0) wrapped = true;
+          if ((patternRef.current[nextIdx] ?? 0) > 0) break;
+        }
+        phaseIndexRef.current = nextIdx;
+        const nextPhase = PHASES[nextIdx] as BreathingPhase;
+        const nextDuration = patternRef.current[nextIdx] ?? 4;
+        if (wrapped) {
           setCycleCount((c) => c + 1);
         }
         setPhase(nextPhase);

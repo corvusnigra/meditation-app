@@ -5,8 +5,8 @@ import type {
   UserSettings,
 } from './types';
 
-export const STORAGE_VERSION = 1;
-
+// version/draft — легаси-ключи ранних версий; остаются в списке,
+// чтобы clearAllStorage вычищал их у старых пользователей.
 export const STORAGE_KEYS = {
   sessions: 'mm:sessions',
   settings: 'mm:settings',

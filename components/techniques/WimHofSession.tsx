@@ -313,7 +313,8 @@ function RunningSession({
           size="sm"
           onClick={() => {
             finishEarly();
-            onComplete(false);
+            // Хотя бы один завершённый раунд — сессия засчитывается.
+            onComplete(round >= 1 || stage === 'recovery');
             router.push('/techniques');
           }}
         >

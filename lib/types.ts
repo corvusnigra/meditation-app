@@ -21,10 +21,7 @@ export type SessionState = {
   status: SessionStatus;
   scenario: Scenario;
   isPaused: boolean;
-  currentPhaseElapsed: number;
-  breathingCycle: BreathingPhase;
   groundingSense: number;
-  groundingItems: string[][];
   gratitudeText: string;
   startedAt: string | null;
 };
@@ -137,8 +134,3 @@ export type LevelDurations = {
   total: number;
 };
 
-export type SessionDraft = {
-  status: SessionStatus;
-  scenario: Scenario;
-  startedAt: string;
-};

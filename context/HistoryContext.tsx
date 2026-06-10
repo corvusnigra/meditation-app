@@ -52,8 +52,11 @@ export function HistoryProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const value = useMemo(() => {
-    const streak = calculateStreak(sessions);
-    const longest = longestStreak(sessions);
+    // Стрик и рекорды — только по полным ритуалам: короткая техника
+    // не должна продлевать серию и двигать прогрессию уровней.
+    const rituals = sessions.filter((s) => s.kind !== 'technique');
+    const streak = calculateStreak(rituals);
+    const longest = longestStreak(rituals);
     const totalMinutes = Math.round(totalDurationMs(sessions) / 60000);
     return { sessions, streak, longest, totalMinutes, add, clear, hydrated };
   }, [sessions, add, clear, hydrated]);

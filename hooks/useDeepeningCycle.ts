@@ -89,31 +89,39 @@ export function useDeepeningCycle({
 
       if (inPhase >= phaseDuration) {
         const overflow = inPhase - phaseDuration;
-        phaseIdxRef.current = (phaseIdxRef.current + 1) % PHASES.length;
 
-        // Закончили полный цикл — увеличиваем счётчик в стадии.
-        if (phaseIdxRef.current === 0) {
-          cycleInStageRef.current += 1;
+        // Шагаем по фазам, пропуская нулевые (holdOut = 0 во всех стадиях);
+        // на каждом обороте цикла обновляем счётчики стадии и проверяем завершение.
+        for (let step = 0; step < PHASES.length; step += 1) {
+          phaseIdxRef.current = (phaseIdxRef.current + 1) % PHASES.length;
 
-          // Стадия пройдена — двигаемся дальше или завершаем.
-          if (cycleInStageRef.current >= stage.cycles) {
-            const nextStageIdx = stageIdxRef.current + 1;
-            if (nextStageIdx >= safeStages.length) {
-              completedRef.current = true;
-              if (intervalRef.current !== null) {
-                clearInterval(intervalRef.current);
-                intervalRef.current = null;
+          if (phaseIdxRef.current === 0) {
+            cycleInStageRef.current += 1;
+
+            const currentStage = safeStages[stageIdxRef.current];
+            if (currentStage && cycleInStageRef.current >= currentStage.cycles) {
+              const nextStageIdx = stageIdxRef.current + 1;
+              if (nextStageIdx >= safeStages.length) {
+                completedRef.current = true;
+                if (intervalRef.current !== null) {
+                  clearInterval(intervalRef.current);
+                  intervalRef.current = null;
+                }
+                onCompleteRef.current?.();
+                return;
               }
-              onCompleteRef.current?.();
-              return;
+              stageIdxRef.current = nextStageIdx;
+              cycleInStageRef.current = 0;
+              setStageIndex(nextStageIdx);
+              const nextStage = safeStages[nextStageIdx];
+              if (nextStage) onStageRef.current?.(nextStageIdx, nextStage);
             }
-            stageIdxRef.current = nextStageIdx;
-            cycleInStageRef.current = 0;
-            setStageIndex(nextStageIdx);
-            const nextStage = safeStages[nextStageIdx];
-            if (nextStage) onStageRef.current?.(nextStageIdx, nextStage);
+            setCycleInStage(cycleInStageRef.current);
           }
-          setCycleInStage(cycleInStageRef.current);
+
+          const dur =
+            safeStages[stageIdxRef.current]?.pattern[phaseIdxRef.current] ?? 0;
+          if (dur > 0) break;
         }
 
         const nextPhase = PHASES[phaseIdxRef.current] as BreathingPhase;

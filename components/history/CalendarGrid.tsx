@@ -17,10 +17,16 @@ export function CalendarGrid({ sessions, onSelect }: Props) {
   const cells = useMemo(() => getMonthGrid(cursor), [cursor]);
   const todayKey = isoDayKey(new Date());
 
-  const completed = useMemo(() => {
-    const s = new Set<string>();
-    sessions.forEach((sess) => s.add(isoDayKey(sess.date)));
-    return s;
+  const { ritualDays, techniqueOnlyDays } = useMemo(() => {
+    const rituals = new Set<string>();
+    const techniques = new Set<string>();
+    sessions.forEach((sess) => {
+      const key = isoDayKey(sess.date);
+      if (sess.kind === 'technique') techniques.add(key);
+      else rituals.add(key);
+    });
+    rituals.forEach((key) => techniques.delete(key));
+    return { ritualDays: rituals, techniqueOnlyDays: techniques };
   }, [sessions]);
 
   const monthTitle = cursor.toLocaleDateString('ru-RU', {
@@ -66,7 +72,8 @@ export function CalendarGrid({ sessions, onSelect }: Props) {
       <div className="grid grid-cols-7 gap-1">
         {cells.map((cell, i) => {
           if (!cell) return <span key={i} className="aspect-square" />;
-          const done = completed.has(cell.iso);
+          const ritual = ritualDays.has(cell.iso);
+          const techniqueOnly = techniqueOnlyDays.has(cell.iso);
           const isToday = cell.iso === todayKey;
           return (
             <button
@@ -77,13 +84,23 @@ export function CalendarGrid({ sessions, onSelect }: Props) {
                 'aspect-square rounded-lg flex flex-col items-center justify-center gap-0.5 text-xs',
                 'transition-colors',
                 isToday ? 'border border-accent-breathing/70' : 'border border-transparent',
-                done
+                ritual
                   ? 'bg-success/15 text-success'
-                  : 'bg-white/5 text-text-secondary hover:bg-white/10',
+                  : techniqueOnly
+                    ? 'bg-accent-gratitude/10 text-accent-gratitude'
+                    : 'bg-white/5 text-text-secondary hover:bg-white/10',
               )}
             >
               <span>{cell.day}</span>
-              {done && <span className="w-1.5 h-1.5 rounded-full bg-success" aria-hidden />}
+              {ritual && (
+                <span className="w-1.5 h-1.5 rounded-full bg-success" aria-hidden />
+              )}
+              {!ritual && techniqueOnly && (
+                <span
+                  className="w-1.5 h-1.5 rounded-full bg-accent-gratitude"
+                  aria-hidden
+                />
+              )}
             </button>
           );
         })}

@@ -9,7 +9,6 @@ import {
   type ReactNode,
 } from 'react';
 import type {
-  PhaseId,
   Scenario,
   SessionState,
   SessionStatus,
@@ -19,10 +18,7 @@ const INITIAL: SessionState = {
   status: 'idle',
   scenario: 'custom',
   isPaused: false,
-  currentPhaseElapsed: 0,
-  breathingCycle: 'inhale',
   groundingSense: 0,
-  groundingItems: [[], [], [], [], []],
   gratitudeText: '',
   startedAt: null,
 };
@@ -34,8 +30,6 @@ type Action =
   | { type: 'resume' }
   | { type: 'set-gratitude'; text: string }
   | { type: 'set-grounding-sense'; index: number }
-  | { type: 'add-grounding-item'; index: number; item: string }
-  | { type: 'complete'; phase: PhaseId }
   | { type: 'reset' };
 
 function reducer(state: SessionState, action: Action): SessionState {
@@ -57,14 +51,6 @@ function reducer(state: SessionState, action: Action): SessionState {
       return { ...state, gratitudeText: action.text };
     case 'set-grounding-sense':
       return { ...state, groundingSense: action.index };
-    case 'add-grounding-item': {
-      const next = state.groundingItems.map((arr, i) =>
-        i === action.index ? [...arr, action.item] : arr,
-      );
-      return { ...state, groundingItems: next };
-    }
-    case 'complete':
-      return state;
     case 'reset':
       return INITIAL;
     default:
@@ -81,7 +67,6 @@ type SessionContextValue = {
   reset: () => void;
   setGratitude: (text: string) => void;
   setGroundingSense: (index: number) => void;
-  addGroundingItem: (index: number, item: string) => void;
 };
 
 const SessionContext = createContext<SessionContextValue | null>(null);
@@ -108,11 +93,6 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     (index: number) => dispatch({ type: 'set-grounding-sense', index }),
     [],
   );
-  const addGroundingItem = useCallback(
-    (index: number, item: string) =>
-      dispatch({ type: 'add-grounding-item', index, item }),
-    [],
-  );
 
   const value = useMemo(
     () => ({
@@ -124,7 +104,6 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       reset,
       setGratitude,
       setGroundingSense,
-      addGroundingItem,
     }),
     [
       state,
@@ -135,7 +114,6 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       reset,
       setGratitude,
       setGroundingSense,
-      addGroundingItem,
     ],
   );
 

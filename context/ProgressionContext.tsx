@@ -60,8 +60,9 @@ export function ProgressionProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!hydrated) return;
+    const rituals = sessions.filter((s) => s.kind !== 'technique');
     const lastSession =
-      sessions.length > 0 ? sessions[sessions.length - 1] ?? null : null;
+      rituals.length > 0 ? rituals[rituals.length - 1] ?? null : null;
     const rolled = maybeRollback(state, lastSession);
     if (rolled.currentLevel !== state.currentLevel) {
       setState(rolled);

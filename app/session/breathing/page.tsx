@@ -71,7 +71,6 @@ export default function BreathingPage() {
   const handlePauseToggle = () => {
     if (showPause) {
       setShowPause(false);
-      pause();
       timer.resume();
       resume();
     } else {

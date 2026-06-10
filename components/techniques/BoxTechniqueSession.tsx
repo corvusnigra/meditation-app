@@ -60,7 +60,7 @@ export function BoxTechniqueSession({ technique }: Props) {
       date: new Date().toISOString(),
       scenario: 'custom',
       gratitudeText: '',
-      durationMs: Math.max(Date.now() - startedAtRef.current, totalSec * 1000),
+      durationMs: Math.max(Date.now() - startedAtRef.current, 0),
       completedPhases: ['breathing'],
       level: progression.currentLevel,
       kind: 'technique',
