@@ -14,6 +14,7 @@ import { useSession } from '@/context/SessionContext';
 import { useHistory } from '@/context/HistoryContext';
 import { useProgressionContext } from '@/context/ProgressionContext';
 import { useTimer } from '@/hooks/useTimer';
+import { useWakeLock } from '@/hooks/useWakeLock';
 import { GRATITUDE_PLACEHOLDER, GRATITUDE_PROMPTS } from '@/lib/constants';
 import { randomId } from '@/lib/utils';
 
@@ -25,6 +26,8 @@ export default function GratitudePage() {
   const [showPause, setShowPause] = useState(false);
   const [showField, setShowField] = useState(false);
   const [reachedMinimum, setReachedMinimum] = useState(false);
+
+  useWakeLock(true);
 
   const totalSec = durations.gratitude;
 

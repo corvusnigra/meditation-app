@@ -8,6 +8,7 @@ import { PageShell } from '@/components/shared/PageShell';
 import { HapticButton } from '@/components/shared/HapticButton';
 import { useWimHof, type WimHofStage } from '@/hooks/useWimHof';
 import { useHaptics } from '@/hooks/useHaptics';
+import { useWakeLock } from '@/hooks/useWakeLock';
 import { useBreathingAudio } from '@/hooks/useBreathingAudio';
 import { useSettings } from '@/context/SettingsContext';
 import { useHistory } from '@/context/HistoryContext';
@@ -41,6 +42,8 @@ export function WimHofSession({ technique }: Props) {
   const [acknowledgedWarning, setAcknowledgedWarning] = useState(false);
   const startedAtRef = useRef<number | null>(null);
   const completedRef = useRef(false);
+
+  useWakeLock(started);
 
   return started ? (
     <RunningSession

@@ -14,12 +14,15 @@ import { GROUNDING_SENSES } from '@/lib/constants';
 import { useSession } from '@/context/SessionContext';
 import { useProgressionContext } from '@/context/ProgressionContext';
 import { useTimer } from '@/hooks/useTimer';
+import { useWakeLock } from '@/hooks/useWakeLock';
 
 export default function GroundingPage() {
   const router = useRouter();
   const { state, advance, pause, resume, setGroundingSense } = useSession();
   const { durations } = useProgressionContext();
   const [showPause, setShowPause] = useState(false);
+
+  useWakeLock(true);
 
   const totalSec = durations.grounding;
 

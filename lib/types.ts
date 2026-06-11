@@ -41,7 +41,13 @@ export type CompletedSession = {
 
 export type TechniqueCategory = 'anxiety' | 'sleep' | 'focus' | 'energy';
 
-export type TechniqueKind = 'box' | 'sigh' | 'wim-hof' | 'deepening';
+export type TechniqueKind =
+  | 'box'
+  | 'sigh'
+  | 'wim-hof'
+  | 'deepening'
+  | 'pmr'
+  | 'bodyscan';
 
 export type BreathingTechniqueId =
   | 'physiological-sigh'
@@ -51,7 +57,22 @@ export type BreathingTechniqueId =
   | 'box-4-4-4-4'
   | 'coherent-6-6'
   | 'wim-hof'
-  | 'diaphragmatic';
+  | 'diaphragmatic'
+  | 'pmr'
+  | 'body-scan';
+
+export type PmrTechniqueConfig = {
+  kind: 'pmr';
+  groups: Array<{ label: string; instruction: string }>;
+  tenseSec: number;
+  releaseSec: number;
+};
+
+export type BodyScanTechniqueConfig = {
+  kind: 'bodyscan';
+  areas: Array<{ label: string; prompt: string }>;
+  secondsPerArea: number;
+};
 
 export type DeepeningStage = {
   pattern: [number, number, number, number];
@@ -99,7 +120,9 @@ export type BreathingTechnique = {
     | BoxTechniqueConfig
     | SighTechniqueConfig
     | WimHofTechniqueConfig
-    | DeepeningTechniqueConfig;
+    | DeepeningTechniqueConfig
+    | PmrTechniqueConfig
+    | BodyScanTechniqueConfig;
 };
 
 export type UserSettings = {
@@ -108,6 +131,7 @@ export type UserSettings = {
   ambientPreset: AmbientPreset;
   ambientVolume: number;
   hapticsEnabled: boolean;
+  hapticGuideEnabled: boolean;
   theme: ThemeMode;
   breathingPattern: [number, number, number, number];
   reducedMotion: boolean;

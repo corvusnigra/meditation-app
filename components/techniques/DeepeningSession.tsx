@@ -10,7 +10,8 @@ import { PauseOverlay } from '@/components/shared/PauseOverlay';
 import { BreathingGuide } from '@/components/breathing/BreathingGuide';
 import { useDeepeningCycle } from '@/hooks/useDeepeningCycle';
 import { useBreathingAudio } from '@/hooks/useBreathingAudio';
-import { useHaptics } from '@/hooks/useHaptics';
+import { useHaptics, usePhaseHaptics } from '@/hooks/useHaptics';
+import { useWakeLock } from '@/hooks/useWakeLock';
 import { useSettings } from '@/context/SettingsContext';
 import { useHistory } from '@/context/HistoryContext';
 import { useProgressionContext } from '@/context/ProgressionContext';
@@ -45,6 +46,10 @@ export function DeepeningSession({ technique }: Props) {
   const { add } = useHistory();
   const { state: progression } = useProgressionContext();
   const haptics = useHaptics(settings.hapticsEnabled);
+  const phaseHaptics = usePhaseHaptics(
+    settings.hapticGuideEnabled,
+    settings.hapticsEnabled,
+  );
   const config = technique.config as DeepeningTechniqueConfig;
   const stages = config.stages;
 
@@ -53,6 +58,8 @@ export function DeepeningSession({ technique }: Props) {
   const [showPause, setShowPause] = useState(false);
   const startedAtRef = useRef<number | null>(null);
   const audioReadyRef = useRef(false);
+
+  useWakeLock(started && !completed);
 
   const audio = useBreathingAudio({
     enabled: settings.ambientEnabled,
@@ -94,7 +101,7 @@ export function DeepeningSession({ technique }: Props) {
     stages,
     active: started && !completed && !showPause,
     onPhaseChange: (next, dur) => {
-      haptics('tap');
+      phaseHaptics(next);
       if (settings.ambientEnabled) audio.onPhase(next, dur);
     },
     onComplete: handleComplete,

@@ -17,7 +17,8 @@ import { useProgressionContext } from '@/context/ProgressionContext';
 import { useBreathingCycle } from '@/hooks/useBreathingCycle';
 import { useBreathingAudio } from '@/hooks/useBreathingAudio';
 import { useTimer } from '@/hooks/useTimer';
-import { useHaptics } from '@/hooks/useHaptics';
+import { usePhaseHaptics } from '@/hooks/useHaptics';
+import { useWakeLock } from '@/hooks/useWakeLock';
 
 export default function BreathingPage() {
   const router = useRouter();
@@ -25,10 +26,15 @@ export default function BreathingPage() {
   const { settings } = useSettings();
   const { durations } = useProgressionContext();
   const [showPause, setShowPause] = useState(false);
-  const haptics = useHaptics(settings.hapticsEnabled);
+  const phaseHaptics = usePhaseHaptics(
+    settings.hapticGuideEnabled,
+    settings.hapticsEnabled,
+  );
 
   const totalSec = durations.breathing;
   const active = !showPause;
+
+  useWakeLock(true);
 
   const timer = useTimer({
     durationSec: totalSec,
@@ -50,7 +56,7 @@ export default function BreathingPage() {
     pattern: settings.breathingPattern,
     active,
     onPhaseChange: (newPhase, dur) => {
-      haptics('tap');
+      phaseHaptics(newPhase);
       audio.onPhase(newPhase, dur);
     },
   });

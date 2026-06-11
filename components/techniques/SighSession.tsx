@@ -7,7 +7,8 @@ import { motion } from 'framer-motion';
 import { PageShell } from '@/components/shared/PageShell';
 import { HapticButton } from '@/components/shared/HapticButton';
 import { useSighCycle, type SighPhase } from '@/hooks/useSighCycle';
-import { useHaptics } from '@/hooks/useHaptics';
+import { useHaptics, usePhaseHaptics } from '@/hooks/useHaptics';
+import { useWakeLock } from '@/hooks/useWakeLock';
 import { useBreathingAudio } from '@/hooks/useBreathingAudio';
 import { useSettings } from '@/context/SettingsContext';
 import { useHistory } from '@/context/HistoryContext';
@@ -61,9 +62,15 @@ export function SighSession({ technique }: Props) {
   const haptics = useHaptics(settings.hapticsEnabled);
 
   const config = technique.config as SighTechniqueConfig;
+  const phaseHaptics = usePhaseHaptics(
+    settings.hapticGuideEnabled,
+    settings.hapticsEnabled,
+  );
   const [started, setStarted] = useState(false);
   const [completed, setCompleted] = useState(false);
   const startedAtRef = useRef<number | null>(null);
+
+  useWakeLock(started && !completed);
 
   const audio = useBreathingAudio({
     enabled: settings.ambientEnabled,
@@ -97,7 +104,7 @@ export function SighSession({ technique }: Props) {
     cycles: config.cycles,
     active: started && !completed,
     onPhaseChange: (next) => {
-      haptics('tap');
+      phaseHaptics(SIGH_TO_BREATHING[next]);
       audio.onPhase(SIGH_TO_BREATHING[next], SIGH_DURATION[next]);
     },
     onComplete: handleComplete,

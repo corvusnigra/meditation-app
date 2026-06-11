@@ -137,6 +137,16 @@ export default function SettingsPage() {
             />
           }
         />
+        <Row
+          label="Вибро-гид дыхания"
+          help="Различимые вибрации фаз: вдох — длинная, выдох — две длинные, задержки — короткие. Практика с телефоном в руке или кармане, не глядя на экран. Только Android."
+          control={
+            <Toggle
+              on={settings.hapticGuideEnabled}
+              onChange={(v) => update({ hapticGuideEnabled: v })}
+            />
+          }
+        />
       </Section>
 
       <Section title="Практика">
