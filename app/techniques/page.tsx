@@ -8,12 +8,17 @@ import {
   CATEGORY_LABEL,
   CATEGORY_ORDER,
   CATEGORY_TAGLINE,
+  isAdaptive,
+  ladderLength,
+  defaultLevel,
+  clampLevel,
   techniquesByCategory,
 } from '@/lib/breathing-techniques';
 import { ensureAudio } from '@/lib/breathing-audio';
 import { useSettings } from '@/context/SettingsContext';
+import { useTechniqueLevels } from '@/hooks/useTechniqueLevel';
 import { cn } from '@/lib/utils';
-import type { TechniqueCategory } from '@/lib/types';
+import type { BreathingTechnique, TechniqueCategory } from '@/lib/types';
 
 const CATEGORY_COLOR: Record<TechniqueCategory, string> = {
   anxiety: 'text-accent-grounding',
@@ -25,12 +30,20 @@ const CATEGORY_COLOR: Record<TechniqueCategory, string> = {
 export default function TechniquesPage() {
   const router = useRouter();
   const { settings } = useSettings();
+  const { levels, hydrated } = useTechniqueLevels();
 
   const handleTechniqueClick = (id: string) => {
     if (settings.ambientEnabled) {
       void ensureAudio(settings.ambientPreset, settings.ambientVolume);
     }
     router.push(`/techniques/${id}`);
+  };
+
+  const levelOf = (tech: BreathingTechnique): number => {
+    const saved = levels[tech.id];
+    return typeof saved === 'number'
+      ? clampLevel(tech, saved)
+      : defaultLevel(tech);
   };
 
   return (
@@ -111,10 +124,16 @@ export default function TechniquesPage() {
                           {tech.tagline}
                         </div>
                       </div>
-                      <div className="text-right">
-                        <div className="text-[11px] text-text-secondary">
-                          {tech.durationLabel}
-                        </div>
+                      <div className="text-right shrink-0">
+                        {hydrated && isAdaptive(tech) ? (
+                          <div className="text-[11px] text-accent-breathing">
+                            ур. {levelOf(tech) + 1}/{ladderLength(tech)}
+                          </div>
+                        ) : (
+                          <div className="text-[11px] text-text-secondary">
+                            {tech.durationLabel}
+                          </div>
+                        )}
                         <span
                           aria-hidden
                           className="text-text-secondary text-base"

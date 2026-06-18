@@ -87,12 +87,26 @@ export type DeepeningTechniqueConfig = {
   mouthExhale?: boolean;
 };
 
+export type BoxStep = {
+  pattern: [number, number, number, number];
+  cycles: number;
+};
+
 export type BoxTechniqueConfig = {
   kind: 'box';
   pattern: [number, number, number, number];
   cycles: number;
   mouthExhale?: boolean;
+  // Лестница сложности easy→hard для адаптивной прогрессии.
+  // Если задана, фактический паттерн/циклы берутся из шага по уровню пользователя.
+  ladder?: BoxStep[];
+  defaultStep?: number;
 };
+
+export type TechniqueFeedback = 'easy' | 'right' | 'hard';
+
+// Персональный уровень сложности по каждой технике (индекс в ladder).
+export type TechniqueLevels = Record<string, number>;
 
 export type SighTechniqueConfig = {
   kind: 'sigh';

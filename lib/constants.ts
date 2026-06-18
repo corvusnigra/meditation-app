@@ -13,6 +13,7 @@ export const STORAGE_KEYS = {
   version: 'mm:version',
   draft: 'mm:draft',
   progression: 'mm:progression',
+  techniqueLevels: 'mm:techniqueLevels',
 } as const;
 
 export const LEVEL_DURATIONS: Record<ProgressionLevel, LevelDurations> = {

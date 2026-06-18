@@ -1,6 +1,7 @@
 import type {
   CompletedSession,
   ProgressionState,
+  TechniqueLevels,
   UserSettings,
 } from './types';
 import { DEFAULT_SETTINGS, STORAGE_KEYS } from './constants';
@@ -84,6 +85,18 @@ export const progressionStorage = {
   },
   clear(): void {
     remove(STORAGE_KEYS.progression);
+  },
+};
+
+export const techniqueLevelsStorage = {
+  load(): TechniqueLevels {
+    return read<TechniqueLevels>(STORAGE_KEYS.techniqueLevels, {});
+  },
+  save(levels: TechniqueLevels): void {
+    write(STORAGE_KEYS.techniqueLevels, levels);
+  },
+  clear(): void {
+    remove(STORAGE_KEYS.techniqueLevels);
   },
 };
 
