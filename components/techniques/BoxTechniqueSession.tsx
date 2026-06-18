@@ -243,11 +243,6 @@ function RunningBox({
             выдох ртом
           </p>
         )}
-        {config.humExhale && (
-          <p className="text-xs text-accent-grounding uppercase tracking-widest">
-            {phase === 'exhale' ? 'гудите «ммм»' : 'вдох через нос'}
-          </p>
-        )}
       </motion.div>
 
       <div className="flex justify-center gap-3 pb-6">

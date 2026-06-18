@@ -41,67 +41,22 @@ export type CompletedSession = {
 
 export type TechniqueCategory = 'anxiety' | 'sleep' | 'focus' | 'energy';
 
-export type TechniqueKind =
-  | 'box'
-  | 'sigh'
-  | 'wim-hof'
-  | 'deepening'
-  | 'pmr'
-  | 'bodyscan'
-  | 'nostril';
+export type TechniqueKind = 'box' | 'sigh' | 'wim-hof' | 'pmr';
 
 export type BreathingTechniqueId =
   | 'physiological-sigh'
-  | 'relax-4-7-8'
   | 'sleep-4-7-8'
-  | 'coherent-4-8'
   | 'box-4-4-4-4'
   | 'coherent-6-6'
   | 'wim-hof'
-  | 'diaphragmatic'
   | 'pmr'
-  | 'body-scan'
-  | 'nadi-shodhana'
-  | 'bhramari'
   | 'cyclic-sigh-5';
-
-export type NostrilPhase =
-  | 'inhale-left'
-  | 'exhale-right'
-  | 'inhale-right'
-  | 'exhale-left';
-
-export type NostrilTechniqueConfig = {
-  kind: 'nostril';
-  inhaleSec: number;
-  exhaleSec: number;
-  cycles: number;
-};
 
 export type PmrTechniqueConfig = {
   kind: 'pmr';
   groups: Array<{ label: string; instruction: string }>;
   tenseSec: number;
   releaseSec: number;
-};
-
-export type BodyScanTechniqueConfig = {
-  kind: 'bodyscan';
-  areas: Array<{ label: string; prompt: string }>;
-  secondsPerArea: number;
-};
-
-export type DeepeningStage = {
-  pattern: [number, number, number, number];
-  cycles: number;
-  label: string;
-  hint?: string;
-};
-
-export type DeepeningTechniqueConfig = {
-  kind: 'deepening';
-  stages: DeepeningStage[];
-  mouthExhale?: boolean;
 };
 
 export type BoxStep = {
@@ -114,7 +69,6 @@ export type BoxTechniqueConfig = {
   pattern: [number, number, number, number];
   cycles: number;
   mouthExhale?: boolean;
-  humExhale?: boolean;
   // Лестница сложности easy→hard для адаптивной прогрессии.
   // Если задана, фактический паттерн/циклы берутся из шага по уровню пользователя.
   ladder?: BoxStep[];
@@ -160,10 +114,7 @@ export type BreathingTechnique = {
     | BoxTechniqueConfig
     | SighTechniqueConfig
     | WimHofTechniqueConfig
-    | DeepeningTechniqueConfig
-    | PmrTechniqueConfig
-    | BodyScanTechniqueConfig
-    | NostrilTechniqueConfig;
+    | PmrTechniqueConfig;
 };
 
 export type UserSettings = {

@@ -25,33 +25,6 @@ export const TECHNIQUES: Record<BreathingTechniqueId, BreathingTechnique> = {
     config: { kind: 'sigh', cycles: 3 },
   },
 
-  'relax-4-7-8': {
-    id: 'relax-4-7-8',
-    category: 'anxiety',
-    isPrimary: false,
-    name: '4-7-8 расслабление',
-    tagline: 'Вдох 4 · задержка 7 · выдох ртом 8',
-    purpose: 'Расслабиться за пару минут',
-    evidence: 'moderate',
-    description:
-      'Удлинённый выдох с задержкой тормозит симпатическую активацию. Подходит когда есть пара минут и можно закрыть глаза.',
-    source: 'Andrew Weil',
-    durationLabel: '~1.5 мин',
-    config: {
-      kind: 'box',
-      pattern: [4, 7, 8, 0],
-      cycles: 4,
-      mouthExhale: true,
-      defaultStep: 1,
-      ladder: [
-        { pattern: [4, 4, 6, 0], cycles: 4 },
-        { pattern: [4, 7, 8, 0], cycles: 4 },
-        { pattern: [4, 7, 8, 0], cycles: 6 },
-        { pattern: [5, 8, 9, 0], cycles: 6 },
-      ],
-    },
-  },
-
   'sleep-4-7-8': {
     id: 'sleep-4-7-8',
     category: 'sleep',
@@ -74,31 +47,6 @@ export const TECHNIQUES: Record<BreathingTechniqueId, BreathingTechnique> = {
         { pattern: [4, 7, 8, 0], cycles: 8 },
         { pattern: [4, 7, 8, 0], cycles: 10 },
         { pattern: [5, 8, 9, 0], cycles: 10 },
-      ],
-    },
-  },
-
-  'coherent-4-8': {
-    id: 'coherent-4-8',
-    category: 'sleep',
-    isPrimary: false,
-    name: 'Резонансное 4/8',
-    tagline: 'Вдох 4 · выдох 8, ровно носом',
-    purpose: 'Успокоиться за счёт долгого выдоха',
-    evidence: 'moderate',
-    description:
-      'Без задержек, монотонно как метроном. Удлинённый выдох усиливает парасимпатику. Хорошо если 4-7-8 неудобно.',
-    durationLabel: '5–10 мин',
-    config: {
-      kind: 'box',
-      pattern: [4, 0, 8, 0],
-      cycles: 30,
-      defaultStep: 1,
-      ladder: [
-        { pattern: [4, 0, 6, 0], cycles: 24 },
-        { pattern: [4, 0, 8, 0], cycles: 30 },
-        { pattern: [4, 0, 10, 0], cycles: 30 },
-        { pattern: [5, 0, 11, 0], cycles: 30 },
       ],
     },
   },
@@ -175,33 +123,6 @@ export const TECHNIQUES: Record<BreathingTechniqueId, BreathingTechnique> = {
     },
   },
 
-  bhramari: {
-    id: 'bhramari',
-    category: 'anxiety',
-    isPrimary: false,
-    name: 'Бхрамари (жужжащее дыхание)',
-    tagline: 'Вдох носом · долгий выдох с гудением «ммм»',
-    purpose: 'Быстро унять нервы гудением',
-    evidence: 'moderate',
-    description:
-      'Вдох через нос, затем долгий выдох с тихим гудением закрытым ртом. Вибрация и удлинённый выдох быстро успокаивают: исследования отмечают снижение тревоги и вегетативного возбуждения.',
-    source: 'Bhramari pranayama; исследования вагусной активации',
-    durationLabel: '~2 мин',
-    config: {
-      kind: 'box',
-      pattern: [4, 0, 7, 0],
-      cycles: 10,
-      humExhale: true,
-      defaultStep: 1,
-      ladder: [
-        { pattern: [4, 0, 6, 0], cycles: 8 },
-        { pattern: [4, 0, 7, 0], cycles: 10 },
-        { pattern: [4, 0, 9, 0], cycles: 10 },
-        { pattern: [5, 0, 11, 0], cycles: 10 },
-      ],
-    },
-  },
-
   'cyclic-sigh-5': {
     id: 'cyclic-sigh-5',
     category: 'anxiety',
@@ -215,21 +136,6 @@ export const TECHNIQUES: Record<BreathingTechniqueId, BreathingTechnique> = {
     source: 'Balban et al., Cell Reports Medicine 2023',
     durationLabel: '~5 мин',
     config: { kind: 'sigh', cycles: 40 },
-  },
-
-  'nadi-shodhana': {
-    id: 'nadi-shodhana',
-    category: 'focus',
-    isPrimary: false,
-    name: 'Дыхание ноздрями (Nadi Shodhana)',
-    tagline: 'Поочерёдно левой и правой ноздрёй',
-    purpose: 'Ясная голова и фокус',
-    evidence: 'moderate',
-    description:
-      'Попеременное дыхание ноздрями. Мета-анализ RCT: снижает давление и ЧСС, улучшает вариабельность сердечного ритма и устойчивость внимания. Закрывайте ноздрю пальцем по подсказке.',
-    source: 'Мета-анализ RCT, Complementary Medicine Research 2024',
-    durationLabel: '~3 мин',
-    config: { kind: 'nostril', inhaleSec: 4, exhaleSec: 6, cycles: 9 },
   },
 
   pmr: {
@@ -260,77 +166,6 @@ export const TECHNIQUES: Record<BreathingTechniqueId, BreathingTechnique> = {
     },
   },
 
-  'body-scan': {
-    id: 'body-scan',
-    category: 'anxiety',
-    isPrimary: false,
-    name: 'Сканирование тела',
-    tagline: 'Внимание по телу сверху вниз, ~4 минуты',
-    purpose: 'Вернуться из мыслей в тело',
-    evidence: 'moderate',
-    description:
-      'Медленно проводите вниманием по телу от макушки до стоп, ничего не меняя — только замечая. Ядро программы MBSR: возвращает из мыслей в тело и снижает фоновое напряжение.',
-    source: 'Kabat-Zinn, MBSR',
-    durationLabel: '~4 мин',
-    config: {
-      kind: 'bodyscan',
-      secondsPerArea: 24,
-      areas: [
-        { label: 'Макушка и лоб', prompt: 'Заметьте ощущения на коже головы. Лоб расслаблен или нахмурен?' },
-        { label: 'Глаза и челюсть', prompt: 'Отпустите глаза. Разожмите зубы, пусть челюсть повиснет.' },
-        { label: 'Шея и плечи', prompt: 'Где плечи относительно ушей? Позвольте им опуститься.' },
-        { label: 'Руки', prompt: 'Пройдите вниманием от плеч до кончиков пальцев. Тепло, покалывание?' },
-        { label: 'Грудь', prompt: 'Почувствуйте, как грудная клетка расширяется с каждым вдохом.' },
-        { label: 'Живот', prompt: 'Живот мягкий? Дыхание доходит до него?' },
-        { label: 'Спина', prompt: 'Ощутите контакт спины с опорой. Где касание сильнее?' },
-        { label: 'Таз и бёдра', prompt: 'Вес тела на сиденье. Просто заметьте давление.' },
-        { label: 'Голени', prompt: 'Икры, колени. Есть ли там напряжение, о котором вы не знали?' },
-        { label: 'Стопы', prompt: 'Контакт стоп с полом. Пальцы, пятки, свод. Всё тело — единое целое.' },
-      ],
-    },
-  },
-
-  diaphragmatic: {
-    id: 'diaphragmatic',
-    category: 'anxiety',
-    isPrimary: false,
-    name: 'Диафрагмальное дыхание',
-    tagline: 'Дышим животом, всё глубже от стадии к стадии',
-    purpose: 'Освоить глубокое дыхание животом',
-    evidence: 'moderate',
-    description:
-      'Медленное брюшное дыхание. Рука на животе — он расширяется на вдохе, опускается на выдохе. Грудь почти не двигается. Каждая стадия — чуть глубже предыдущей.',
-    durationLabel: '4–5 мин',
-    config: {
-      kind: 'deepening',
-      stages: [
-        {
-          pattern: [4, 1, 5, 0],
-          cycles: 3,
-          label: 'Привыкаем',
-          hint: 'Положите руку на живот. Дышите медленно носом.',
-        },
-        {
-          pattern: [5, 1, 7, 0],
-          cycles: 3,
-          label: 'Глубже',
-          hint: 'Чувствуйте, как живот поднимается выше на вдохе.',
-        },
-        {
-          pattern: [6, 2, 9, 0],
-          cycles: 4,
-          label: 'Ещё глубже',
-          hint: 'Выдох длиннее вдоха. Не торопитесь.',
-        },
-        {
-          pattern: [7, 2, 11, 0],
-          cycles: 4,
-          label: 'Самое глубокое',
-          hint: 'Полное брюшное дыхание. Тело тяжелеет.',
-        },
-      ],
-    },
-  },
 };
 
 export const TECHNIQUES_LIST: BreathingTechnique[] = Object.values(TECHNIQUES);
