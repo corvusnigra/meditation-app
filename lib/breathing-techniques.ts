@@ -4,6 +4,7 @@ import type {
   BreathingTechnique,
   BreathingTechniqueId,
   TechniqueCategory,
+  TechniqueEvidence,
   TechniqueFeedback,
 } from './types';
 
@@ -14,6 +15,9 @@ export const TECHNIQUES: Record<BreathingTechniqueId, BreathingTechnique> = {
     isPrimary: true,
     name: 'Физиологический вздох',
     tagline: 'Два вдоха носом + длинный выдох ртом',
+    purpose: 'Сбросить тревогу за минуту',
+    evidence: 'strong',
+    recommended: true,
     description:
       'Самый быстрый способ сбить возбуждение нервной системы. Эффект приходит за 30–60 секунд. Подходит когда нет минуты сесть.',
     source: 'Huberman / Balban et al., Cell Reports Medicine 2023',
@@ -27,6 +31,8 @@ export const TECHNIQUES: Record<BreathingTechniqueId, BreathingTechnique> = {
     isPrimary: false,
     name: '4-7-8 расслабление',
     tagline: 'Вдох 4 · задержка 7 · выдох ртом 8',
+    purpose: 'Расслабиться за пару минут',
+    evidence: 'moderate',
     description:
       'Удлинённый выдох с задержкой тормозит симпатическую активацию. Подходит когда есть пара минут и можно закрыть глаза.',
     source: 'Andrew Weil',
@@ -52,6 +58,8 @@ export const TECHNIQUES: Record<BreathingTechniqueId, BreathingTechnique> = {
     isPrimary: true,
     name: '4-7-8 на засыпание',
     tagline: 'Вдох 4 · задержка 7 · выдох ртом 8',
+    purpose: 'Помогает уснуть',
+    evidence: 'moderate',
     description:
       'Та же техника, но 8 циклов лёжа на спине. Удлинённый выдох тормозит нервную систему и помогает уснуть.',
     durationLabel: '~3 мин',
@@ -76,6 +84,8 @@ export const TECHNIQUES: Record<BreathingTechniqueId, BreathingTechnique> = {
     isPrimary: false,
     name: 'Резонансное 4/8',
     tagline: 'Вдох 4 · выдох 8, ровно носом',
+    purpose: 'Успокоиться за счёт долгого выдоха',
+    evidence: 'moderate',
     description:
       'Без задержек, монотонно как метроном. Удлинённый выдох усиливает парасимпатику. Хорошо если 4-7-8 неудобно.',
     durationLabel: '5–10 мин',
@@ -99,6 +109,8 @@ export const TECHNIQUES: Record<BreathingTechniqueId, BreathingTechnique> = {
     isPrimary: true,
     name: 'Box Breathing 4-4-4-4',
     tagline: 'Вдох 4 · задержка 4 · выдох 4 · задержка 4',
+    purpose: 'Собранность под давлением',
+    evidence: 'moderate',
     description:
       '«Квадратное дыхание» из подготовки спецназа. Даёт спокойный фокус. 2–5 минут перед сложной задачей.',
     durationLabel: '~2 мин',
@@ -121,7 +133,10 @@ export const TECHNIQUES: Record<BreathingTechniqueId, BreathingTechnique> = {
     category: 'focus',
     isPrimary: false,
     name: 'Когерентное 6/6',
-    tagline: 'Вдох 6 · выдох 6, ~6 дыханий/мин',
+    tagline: 'Вдох 6 · выдох 6, ~5 дыханий/мин',
+    purpose: 'Тренировать стрессоустойчивость',
+    evidence: 'strong',
+    recommended: true,
     description:
       'Медленное ровное дыхание носом без задержек. Хорошо идёт фоном на длинных рабочих сессиях.',
     durationLabel: '5+ мин',
@@ -145,6 +160,8 @@ export const TECHNIQUES: Record<BreathingTechniqueId, BreathingTechnique> = {
     isPrimary: true,
     name: 'Метод Вим Хофа',
     tagline: '3 раунда · 30 быстрых дыханий · задержка',
+    purpose: 'Бодрость без кофе',
+    evidence: 'emerging',
     description:
       '30 глубоких вдохов + пассивных выдохов, потом задержка на пустых лёгких, потом восстановительный вдох и 15 секунд задержки. Заменяет утренний кофе.',
     source: 'Wim Hof Method',
@@ -164,6 +181,8 @@ export const TECHNIQUES: Record<BreathingTechniqueId, BreathingTechnique> = {
     isPrimary: false,
     name: 'Бхрамари (жужжащее дыхание)',
     tagline: 'Вдох носом · долгий выдох с гудением «ммм»',
+    purpose: 'Быстро унять нервы гудением',
+    evidence: 'moderate',
     description:
       'Вдох через нос, затем долгий выдох с тихим гудением закрытым ртом. Вибрация и удлинённый выдох быстро успокаивают: исследования отмечают снижение тревоги и вегетативного возбуждения.',
     source: 'Bhramari pranayama; исследования вагусной активации',
@@ -189,6 +208,8 @@ export const TECHNIQUES: Record<BreathingTechniqueId, BreathingTechnique> = {
     isPrimary: false,
     name: 'Циклический вздох (5 мин)',
     tagline: 'Полный протокол: 5 минут двойных вздохов',
+    purpose: 'Выровнять настроение за 5 минут',
+    evidence: 'strong',
     description:
       'Та же механика, что у быстрого вздоха, но 5 минут подряд — ровно как в исследовании Стэнфорда (Balban, 2023), где из всех практик циклический вздох сильнее всего улучшал настроение и снижал частоту дыхания.',
     source: 'Balban et al., Cell Reports Medicine 2023',
@@ -202,6 +223,8 @@ export const TECHNIQUES: Record<BreathingTechniqueId, BreathingTechnique> = {
     isPrimary: false,
     name: 'Дыхание ноздрями (Nadi Shodhana)',
     tagline: 'Поочерёдно левой и правой ноздрёй',
+    purpose: 'Ясная голова и фокус',
+    evidence: 'moderate',
     description:
       'Попеременное дыхание ноздрями. Мета-анализ RCT: снижает давление и ЧСС, улучшает вариабельность сердечного ритма и устойчивость внимания. Закрывайте ноздрю пальцем по подсказке.',
     source: 'Мета-анализ RCT, Complementary Medicine Research 2024',
@@ -215,6 +238,8 @@ export const TECHNIQUES: Record<BreathingTechniqueId, BreathingTechnique> = {
     isPrimary: false,
     name: 'Мышечная релаксация',
     tagline: 'Напрячь 6 секунд — отпустить 12, по группам мышц',
+    purpose: 'Отпустить телесное напряжение',
+    evidence: 'strong',
     description:
       'Прогрессивная мышечная релаксация по Джекобсону. Поочерёдно напрягаете и отпускаете группы мышц — тело учится различать напряжение и само сбрасывает его. Одна из самых проверенных техник для сна и тревоги.',
     source: 'Jacobson, 1938; современные протоколы PMR',
@@ -241,6 +266,8 @@ export const TECHNIQUES: Record<BreathingTechniqueId, BreathingTechnique> = {
     isPrimary: false,
     name: 'Сканирование тела',
     tagline: 'Внимание по телу сверху вниз, ~4 минуты',
+    purpose: 'Вернуться из мыслей в тело',
+    evidence: 'moderate',
     description:
       'Медленно проводите вниманием по телу от макушки до стоп, ничего не меняя — только замечая. Ядро программы MBSR: возвращает из мыслей в тело и снижает фоновое напряжение.',
     source: 'Kabat-Zinn, MBSR',
@@ -269,6 +296,8 @@ export const TECHNIQUES: Record<BreathingTechniqueId, BreathingTechnique> = {
     isPrimary: false,
     name: 'Диафрагмальное дыхание',
     tagline: 'Дышим животом, всё глубже от стадии к стадии',
+    purpose: 'Освоить глубокое дыхание животом',
+    evidence: 'moderate',
     description:
       'Медленное брюшное дыхание. Рука на животе — он расширяется на вдохе, опускается на выдохе. Грудь почти не двигается. Каждая стадия — чуть глубже предыдущей.',
     durationLabel: '4–5 мин',
@@ -327,12 +356,32 @@ export const CATEGORY_ORDER: TechniqueCategory[] = [
   'energy',
 ];
 
+const EVIDENCE_RANK: Record<TechniqueEvidence, number> = {
+  strong: 2,
+  moderate: 1,
+  emerging: 0,
+};
+
+export const EVIDENCE_LABEL: Record<TechniqueEvidence, string> = {
+  strong: 'Доказано',
+  moderate: 'Есть данные',
+  emerging: 'Ранние данные',
+};
+
+// Самое доказательное — наверх: сначала «главная» техника состояния,
+// затем по силе доказательной базы.
 export function techniquesByCategory(
   category: TechniqueCategory,
 ): BreathingTechnique[] {
-  return TECHNIQUES_LIST.filter((t) => t.category === category).sort(
-    (a, b) => Number(b.isPrimary) - Number(a.isPrimary),
-  );
+  return TECHNIQUES_LIST.filter((t) => t.category === category).sort((a, b) => {
+    if (a.isPrimary !== b.isPrimary) return Number(b.isPrimary) - Number(a.isPrimary);
+    return EVIDENCE_RANK[b.evidence] - EVIDENCE_RANK[a.evidence];
+  });
+}
+
+// Для блока «Рекомендуем» наверху страницы (в моменте + тренировка).
+export function recommendedTechniques(): BreathingTechnique[] {
+  return TECHNIQUES_LIST.filter((t) => t.recommended);
 }
 
 // --- Адаптивная прогрессия (только box-техники с лестницей) ---

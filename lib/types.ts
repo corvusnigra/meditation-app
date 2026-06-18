@@ -139,12 +139,20 @@ export type WimHofTechniqueConfig = {
   recoveryHoldSec: number;
 };
 
+export type TechniqueEvidence = 'strong' | 'moderate' | 'emerging';
+
 export type BreathingTechnique = {
   id: BreathingTechniqueId;
   category: TechniqueCategory;
   isPrimary: boolean;
   name: string;
   tagline: string;
+  // Короткое «для чего/когда» — главная строка карточки.
+  purpose: string;
+  // Сила доказательной базы (для сортировки и бейджа).
+  evidence: TechniqueEvidence;
+  // Вынести в блок «Рекомендуем» наверху.
+  recommended?: boolean;
   description: string;
   source?: string;
   durationLabel: string;
