@@ -10,6 +10,7 @@ import { useNostrilCycle } from '@/hooks/useNostrilCycle';
 import { useBreathingAudio } from '@/hooks/useBreathingAudio';
 import { usePhaseHaptics } from '@/hooks/useHaptics';
 import { useWakeLock } from '@/hooks/useWakeLock';
+import { entrainmentHzForCategory } from '@/lib/entrainment';
 import { useSettings } from '@/context/SettingsContext';
 import { useHistory } from '@/context/HistoryContext';
 import { useProgressionContext } from '@/context/ProgressionContext';
@@ -64,6 +65,8 @@ export function NadiShodhanaSession({ technique }: Props) {
     preset: settings.ambientPreset,
     volume: settings.ambientVolume,
     active: started && !completed,
+    entrainment: settings.entrainmentEnabled,
+    entrainmentHz: entrainmentHzForCategory(technique.category),
   });
 
   const handleComplete = () => {
@@ -141,7 +144,7 @@ export function NadiShodhanaSession({ technique }: Props) {
             size="lg"
             haptic="success"
             onClick={async () => {
-              if (settings.ambientEnabled) {
+              if (settings.ambientEnabled || settings.entrainmentEnabled) {
                 await ensureAudio(settings.ambientPreset, settings.ambientVolume);
               }
               startedAtRef.current = Date.now();

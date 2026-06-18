@@ -33,7 +33,7 @@ export default function TechniquesPage() {
   const { levels, hydrated } = useTechniqueLevels();
 
   const handleTechniqueClick = (id: string) => {
-    if (settings.ambientEnabled) {
+    if (settings.ambientEnabled || settings.entrainmentEnabled) {
       void ensureAudio(settings.ambientPreset, settings.ambientVolume);
     }
     router.push(`/techniques/${id}`);

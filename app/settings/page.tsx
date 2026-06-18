@@ -13,7 +13,8 @@ import type { AmbientPreset, CustomDurations, ThemeMode } from '@/lib/types';
 import { LEVEL_DURATIONS, LEVEL_LABEL } from '@/lib/constants';
 import { cn } from '@/lib/utils';
 import { clearAllStorage } from '@/lib/storage';
-import { ensureAudio, startAmbient, stopAmbient, onBreathPhase, setVolume } from '@/lib/breathing-audio';
+import { ensureAudio, startAmbient, stopAmbient, onBreathPhase, setVolume, setEntrainment } from '@/lib/breathing-audio';
+import { RITUAL_ENTRAINMENT_HZ } from '@/lib/entrainment';
 
 const PRESETS: AmbientPreset[] = ['ocean', 'forest', 'night', 'silence'];
 const THEMES: { value: ThemeMode; label: string }[] = [
@@ -53,6 +54,21 @@ export default function SettingsPage() {
       }
     } else {
       stopAmbient();
+    }
+  };
+
+  const handleEntrainmentToggle = async (v: boolean) => {
+    update({ entrainmentEnabled: v });
+    if (v) {
+      const ok = await ensureAudio(settings.ambientPreset, settings.ambientVolume);
+      if (ok) {
+        startAmbient(settings.ambientPreset, settings.ambientVolume);
+        // Превью на альфа-ритме (как в спокойных практиках).
+        setEntrainment(true, RITUAL_ENTRAINMENT_HZ);
+      }
+    } else {
+      setEntrainment(false, RITUAL_ENTRAINMENT_HZ);
+      if (!settings.ambientEnabled) stopAmbient();
     }
   };
 
@@ -144,6 +160,16 @@ export default function SettingsPage() {
             <Toggle
               on={settings.hapticGuideEnabled}
               onChange={(v) => update({ hapticGuideEnabled: v })}
+            />
+          }
+        />
+        <Row
+          label="Звуковой ритм"
+          help="Громкость звука мягко пульсирует на частоте, подобранной под практику (фокус, спокойствие, сон), помогая мозгу настроиться. Работает через динамики, в наушниках чуть заметнее."
+          control={
+            <Toggle
+              on={settings.entrainmentEnabled}
+              onChange={(v) => void handleEntrainmentToggle(v)}
             />
           }
         />

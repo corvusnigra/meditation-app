@@ -165,6 +165,7 @@ export type UserSettings = {
   ambientVolume: number;
   hapticsEnabled: boolean;
   hapticGuideEnabled: boolean;
+  entrainmentEnabled: boolean;
   theme: ThemeMode;
   breathingPattern: [number, number, number, number];
   reducedMotion: boolean;

@@ -19,6 +19,7 @@ import { useBreathingAudio } from '@/hooks/useBreathingAudio';
 import { useTimer } from '@/hooks/useTimer';
 import { usePhaseHaptics } from '@/hooks/useHaptics';
 import { useWakeLock } from '@/hooks/useWakeLock';
+import { RITUAL_ENTRAINMENT_HZ } from '@/lib/entrainment';
 
 export default function BreathingPage() {
   const router = useRouter();
@@ -50,6 +51,8 @@ export default function BreathingPage() {
     preset: settings.ambientPreset,
     volume: settings.ambientVolume,
     active,
+    entrainment: settings.entrainmentEnabled,
+    entrainmentHz: RITUAL_ENTRAINMENT_HZ,
   });
 
   const { phase, secondsInPhase, phaseProgress } = useBreathingCycle({

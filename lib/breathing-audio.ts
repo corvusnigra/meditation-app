@@ -10,6 +10,13 @@ type Graph = {
   filter: BiquadFilterNode;
   panner: StereoPannerNode;
   lfo: { osc: OscillatorNode; gain: GainNode } | null;
+  // Слой энтрейнмента: несущая, чья громкость пульсирует на целевой частоте (AM).
+  entrainment: {
+    carrier: OscillatorNode;
+    am: GainNode; // громкость осциллирует благодаря entLfo
+    level: GainNode; // общий вкл/выкл слоя
+    entLfo: OscillatorNode;
+  };
 };
 
 let ctx: AudioContext | null = null;
@@ -97,7 +104,43 @@ function buildGraph(audioCtx: AudioContext, preset: AmbientPreset): Graph {
     lfo = { osc: lfoOsc, gain: lfoGain };
   }
 
-  return { master, drone, shimmer, filter, panner, lfo };
+  // --- Слой энтрейнмента (амплитудная модуляция) ---
+  // Несущая — мягкий синус, гармоничный базовому дрону (или 160 Гц для Silence).
+  const carrierFreq = cfg.droneFreq > 0 ? cfg.droneFreq * 2 : 160;
+  const carrier = audioCtx.createOscillator();
+  carrier.type = 'sine';
+  carrier.frequency.value = carrierFreq;
+
+  // am.gain осциллирует вокруг 0.5 с амплитудой 0.5 → 0..1 (глубокая AM).
+  const am = audioCtx.createGain();
+  am.gain.value = 0.5;
+  const entLfo = audioCtx.createOscillator();
+  entLfo.type = 'sine';
+  entLfo.frequency.value = 10;
+  const entLfoDepth = audioCtx.createGain();
+  entLfoDepth.gain.value = 0.5;
+  entLfo.connect(entLfoDepth).connect(am.gain);
+
+  // Общий уровень слоя (0 = выключен), мягко фильтруем чтобы не звенело.
+  const entFilter = audioCtx.createBiquadFilter();
+  entFilter.type = 'lowpass';
+  entFilter.frequency.value = 700;
+  const level = audioCtx.createGain();
+  level.gain.value = 0;
+
+  carrier.connect(am).connect(entFilter).connect(level).connect(master);
+  carrier.start();
+  entLfo.start();
+
+  return {
+    master,
+    drone,
+    shimmer,
+    filter,
+    panner,
+    lfo,
+    entrainment: { carrier, am, level, entLfo },
+  };
 }
 
 function disposeGraph(audioCtx: AudioContext, g: Graph) {
@@ -110,6 +153,8 @@ function disposeGraph(audioCtx: AudioContext, g: Graph) {
         g.drone?.osc.stop();
         g.shimmer.forEach((s) => s.osc.stop());
         g.lfo?.osc.stop();
+        g.entrainment.carrier.stop();
+        g.entrainment.entLfo.stop();
       } catch {
         // already stopped
       }
@@ -154,6 +199,16 @@ export function setVolume(volume: number) {
   currentVolume = volume;
   if (!ctx || !graph) return;
   graph.master.gain.setTargetAtTime(volume * 0.7, ctx.currentTime, 0.3);
+}
+
+// Включить/настроить слой энтрейнмента: целевая частота AM и громкость слоя.
+export function setEntrainment(enabled: boolean, hz: number) {
+  if (!ctx || !graph) return;
+  const now = ctx.currentTime;
+  const ent = graph.entrainment;
+  ent.entLfo.frequency.setTargetAtTime(hz, now, 0.2);
+  // Скромный уровень — это фон под ambient, а не основной звук.
+  ent.level.gain.setTargetAtTime(enabled ? currentVolume * 0.16 : 0, now, 0.6);
 }
 
 export function setActive(active: boolean) {

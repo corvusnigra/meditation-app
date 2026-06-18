@@ -16,6 +16,7 @@ import { useBreathingAudio } from '@/hooks/useBreathingAudio';
 import { useHaptics, usePhaseHaptics } from '@/hooks/useHaptics';
 import { useWakeLock } from '@/hooks/useWakeLock';
 import { useTechniqueLevel } from '@/hooks/useTechniqueLevel';
+import { entrainmentHzForCategory } from '@/lib/entrainment';
 import { useSettings } from '@/context/SettingsContext';
 import { useHistory } from '@/context/HistoryContext';
 import { useProgressionContext } from '@/context/ProgressionContext';
@@ -143,6 +144,8 @@ function RunningBox({
     preset: settings.ambientPreset,
     volume: settings.ambientVolume,
     active,
+    entrainment: settings.entrainmentEnabled,
+    entrainmentHz: entrainmentHzForCategory(technique.category),
   });
 
   const { phase, secondsInPhase } = useBreathingCycle({

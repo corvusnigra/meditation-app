@@ -9,6 +9,7 @@ import { HapticButton } from '@/components/shared/HapticButton';
 import { useWimHof, type WimHofStage } from '@/hooks/useWimHof';
 import { useHaptics } from '@/hooks/useHaptics';
 import { useWakeLock } from '@/hooks/useWakeLock';
+import { entrainmentHzForCategory } from '@/lib/entrainment';
 import { useBreathingAudio } from '@/hooks/useBreathingAudio';
 import { useSettings } from '@/context/SettingsContext';
 import { useHistory } from '@/context/HistoryContext';
@@ -144,7 +145,7 @@ export function WimHofSession({ technique }: Props) {
           haptic="success"
           disabled={!acknowledgedWarning}
           onClick={async () => {
-            if (settings.ambientEnabled) {
+            if (settings.ambientEnabled || settings.entrainmentEnabled) {
               await ensureAudio(settings.ambientPreset, settings.ambientVolume);
             }
             startedAtRef.current = Date.now();
@@ -179,6 +180,8 @@ function RunningSession({
     preset: settings.ambientPreset,
     volume: settings.ambientVolume,
     active: true,
+    entrainment: settings.entrainmentEnabled,
+    entrainmentHz: entrainmentHzForCategory(technique.category),
   });
 
   const {

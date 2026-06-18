@@ -46,6 +46,7 @@ export const DEFAULT_SETTINGS: UserSettings = {
   ambientVolume: 0.5,
   hapticsEnabled: true,
   hapticGuideEnabled: false,
+  entrainmentEnabled: false,
   theme: 'dark',
   breathingPattern: DEFAULT_BREATHING_PATTERN,
   reducedMotion: false,

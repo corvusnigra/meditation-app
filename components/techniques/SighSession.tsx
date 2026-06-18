@@ -9,6 +9,7 @@ import { HapticButton } from '@/components/shared/HapticButton';
 import { useSighCycle, type SighPhase } from '@/hooks/useSighCycle';
 import { useHaptics, usePhaseHaptics } from '@/hooks/useHaptics';
 import { useWakeLock } from '@/hooks/useWakeLock';
+import { entrainmentHzForCategory } from '@/lib/entrainment';
 import { useBreathingAudio } from '@/hooks/useBreathingAudio';
 import { useSettings } from '@/context/SettingsContext';
 import { useHistory } from '@/context/HistoryContext';
@@ -76,6 +77,8 @@ export function SighSession({ technique }: Props) {
     preset: settings.ambientPreset,
     volume: settings.ambientVolume,
     active: started && !completed,
+    entrainment: settings.entrainmentEnabled,
+    entrainmentHz: entrainmentHzForCategory(technique.category),
   });
 
   const handleComplete = () => {
@@ -148,7 +151,7 @@ export function SighSession({ technique }: Props) {
             size="lg"
             haptic="success"
             onClick={async () => {
-              if (settings.ambientEnabled) {
+              if (settings.ambientEnabled || settings.entrainmentEnabled) {
                 await ensureAudio(settings.ambientPreset, settings.ambientVolume);
               }
               startedAtRef.current = Date.now();

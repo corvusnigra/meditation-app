@@ -12,6 +12,7 @@ import { useDeepeningCycle } from '@/hooks/useDeepeningCycle';
 import { useBreathingAudio } from '@/hooks/useBreathingAudio';
 import { useHaptics, usePhaseHaptics } from '@/hooks/useHaptics';
 import { useWakeLock } from '@/hooks/useWakeLock';
+import { entrainmentHzForCategory } from '@/lib/entrainment';
 import { useSettings } from '@/context/SettingsContext';
 import { useHistory } from '@/context/HistoryContext';
 import { useProgressionContext } from '@/context/ProgressionContext';
@@ -66,6 +67,8 @@ export function DeepeningSession({ technique }: Props) {
     preset: settings.ambientPreset,
     volume: settings.ambientVolume,
     active: started && !completed && !showPause,
+    entrainment: settings.entrainmentEnabled,
+    entrainmentHz: entrainmentHzForCategory(technique.category),
   });
 
   const handleComplete = () => {
@@ -163,7 +166,7 @@ export function DeepeningSession({ technique }: Props) {
             size="lg"
             haptic="success"
             onClick={async () => {
-              if (settings.ambientEnabled) {
+              if (settings.ambientEnabled || settings.entrainmentEnabled) {
                 await ensureAudio(settings.ambientPreset, settings.ambientVolume);
               }
               startedAtRef.current = Date.now();

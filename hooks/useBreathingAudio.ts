@@ -5,6 +5,7 @@ import {
   ensureAudio,
   onBreathPhase,
   setActive,
+  setEntrainment,
   setVolume,
   startAmbient,
   stopAmbient,
@@ -12,10 +13,12 @@ import {
 import type { AmbientPreset, BreathingPhase } from '@/lib/types';
 
 type UseBreathingAudioOptions = {
-  enabled: boolean;
+  enabled: boolean; // ambient (дрон/мерцание)
   preset: AmbientPreset;
   volume: number;
   active: boolean;
+  entrainment?: boolean; // слой амплитудной модуляции
+  entrainmentHz?: number;
 };
 
 type UseBreathingAudioResult = {
@@ -29,9 +32,14 @@ export function useBreathingAudio({
   preset,
   volume,
   active,
+  entrainment = false,
+  entrainmentHz = 10,
 }: UseBreathingAudioOptions): UseBreathingAudioResult {
+  // Движок нужен, если включён ambient ИЛИ энтрейнмент.
+  const engineOn = enabled || entrainment;
+
   useEffect(() => {
-    if (!enabled) {
+    if (!engineOn) {
       stopAmbient();
       return;
     }
@@ -39,15 +47,19 @@ export function useBreathingAudio({
     return () => {
       stopAmbient();
     };
-  }, [enabled, preset]);
+  }, [engineOn, preset]);
 
   useEffect(() => {
-    if (enabled) setVolume(volume);
-  }, [enabled, volume]);
+    if (engineOn) setVolume(volume);
+  }, [engineOn, volume]);
 
   useEffect(() => {
-    if (enabled) setActive(active);
-  }, [enabled, active]);
+    if (engineOn) setActive(active);
+  }, [engineOn, active]);
+
+  useEffect(() => {
+    if (engineOn) setEntrainment(entrainment, entrainmentHz);
+  }, [engineOn, entrainment, entrainmentHz]);
 
   return {
     unlock: async () => {

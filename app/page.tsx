@@ -28,7 +28,7 @@ export default function HomePage() {
   const [selected, setSelected] = useState<Scenario>('custom');
 
   const onStart = () => {
-    if (settings.ambientEnabled) {
+    if (settings.ambientEnabled || settings.entrainmentEnabled) {
       void ensureAudio(settings.ambientPreset, settings.ambientVolume);
     }
     start(selected);
