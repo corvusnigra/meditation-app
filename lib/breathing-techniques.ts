@@ -158,6 +158,57 @@ export const TECHNIQUES: Record<BreathingTechniqueId, BreathingTechnique> = {
     },
   },
 
+  bhramari: {
+    id: 'bhramari',
+    category: 'anxiety',
+    isPrimary: false,
+    name: 'Бхрамари (жужжащее дыхание)',
+    tagline: 'Вдох носом · долгий выдох с гудением «ммм»',
+    description:
+      'Вдох через нос, затем долгий выдох с тихим гудением закрытым ртом. Вибрация и удлинённый выдох быстро успокаивают: исследования отмечают снижение тревоги и вегетативного возбуждения.',
+    source: 'Bhramari pranayama; исследования вагусной активации',
+    durationLabel: '~2 мин',
+    config: {
+      kind: 'box',
+      pattern: [4, 0, 7, 0],
+      cycles: 10,
+      humExhale: true,
+      defaultStep: 1,
+      ladder: [
+        { pattern: [4, 0, 6, 0], cycles: 8 },
+        { pattern: [4, 0, 7, 0], cycles: 10 },
+        { pattern: [4, 0, 9, 0], cycles: 10 },
+        { pattern: [5, 0, 11, 0], cycles: 10 },
+      ],
+    },
+  },
+
+  'cyclic-sigh-5': {
+    id: 'cyclic-sigh-5',
+    category: 'anxiety',
+    isPrimary: false,
+    name: 'Циклический вздох (5 мин)',
+    tagline: 'Полный протокол: 5 минут двойных вздохов',
+    description:
+      'Та же механика, что у быстрого вздоха, но 5 минут подряд — ровно как в исследовании Стэнфорда (Balban, 2023), где из всех практик циклический вздох сильнее всего улучшал настроение и снижал частоту дыхания.',
+    source: 'Balban et al., Cell Reports Medicine 2023',
+    durationLabel: '~5 мин',
+    config: { kind: 'sigh', cycles: 40 },
+  },
+
+  'nadi-shodhana': {
+    id: 'nadi-shodhana',
+    category: 'focus',
+    isPrimary: false,
+    name: 'Дыхание ноздрями (Nadi Shodhana)',
+    tagline: 'Поочерёдно левой и правой ноздрёй',
+    description:
+      'Попеременное дыхание ноздрями. Мета-анализ RCT: снижает давление и ЧСС, улучшает вариабельность сердечного ритма и устойчивость внимания. Закрывайте ноздрю пальцем по подсказке.',
+    source: 'Мета-анализ RCT, Complementary Medicine Research 2024',
+    durationLabel: '~3 мин',
+    config: { kind: 'nostril', inhaleSec: 4, exhaleSec: 6, cycles: 9 },
+  },
+
   pmr: {
     id: 'pmr',
     category: 'sleep',

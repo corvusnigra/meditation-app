@@ -47,7 +47,8 @@ export type TechniqueKind =
   | 'wim-hof'
   | 'deepening'
   | 'pmr'
-  | 'bodyscan';
+  | 'bodyscan'
+  | 'nostril';
 
 export type BreathingTechniqueId =
   | 'physiological-sigh'
@@ -59,7 +60,23 @@ export type BreathingTechniqueId =
   | 'wim-hof'
   | 'diaphragmatic'
   | 'pmr'
-  | 'body-scan';
+  | 'body-scan'
+  | 'nadi-shodhana'
+  | 'bhramari'
+  | 'cyclic-sigh-5';
+
+export type NostrilPhase =
+  | 'inhale-left'
+  | 'exhale-right'
+  | 'inhale-right'
+  | 'exhale-left';
+
+export type NostrilTechniqueConfig = {
+  kind: 'nostril';
+  inhaleSec: number;
+  exhaleSec: number;
+  cycles: number;
+};
 
 export type PmrTechniqueConfig = {
   kind: 'pmr';
@@ -97,6 +114,7 @@ export type BoxTechniqueConfig = {
   pattern: [number, number, number, number];
   cycles: number;
   mouthExhale?: boolean;
+  humExhale?: boolean;
   // Лестница сложности easy→hard для адаптивной прогрессии.
   // Если задана, фактический паттерн/циклы берутся из шага по уровню пользователя.
   ladder?: BoxStep[];
@@ -136,7 +154,8 @@ export type BreathingTechnique = {
     | WimHofTechniqueConfig
     | DeepeningTechniqueConfig
     | PmrTechniqueConfig
-    | BodyScanTechniqueConfig;
+    | BodyScanTechniqueConfig
+    | NostrilTechniqueConfig;
 };
 
 export type UserSettings = {

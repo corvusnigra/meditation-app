@@ -208,6 +208,7 @@ function RunningBox({
         <BreathingTimer
           remainingSec={Math.ceil(timer.remaining)}
           totalSec={totalSec}
+          label={technique.tagline}
         />
       </div>
 
@@ -237,6 +238,11 @@ function RunningBox({
         {config.mouthExhale && phase === 'exhale' && (
           <p className="text-xs text-text-secondary uppercase tracking-widest">
             выдох ртом
+          </p>
+        )}
+        {config.humExhale && (
+          <p className="text-xs text-accent-grounding uppercase tracking-widest">
+            {phase === 'exhale' ? 'гудите «ммм»' : 'вдох через нос'}
           </p>
         )}
       </motion.div>
