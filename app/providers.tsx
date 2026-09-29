@@ -5,8 +5,11 @@ import { SettingsProvider } from '@/context/SettingsContext';
 import { HistoryProvider } from '@/context/HistoryContext';
 import { ProgressionProvider } from '@/context/ProgressionContext';
 import { SessionProvider } from '@/context/SessionContext';
+import { useServiceWorker } from '@/hooks/useServiceWorker';
 
 export function Providers({ children }: { children: ReactNode }) {
+  useServiceWorker();
+
   return (
     <SettingsProvider>
       <HistoryProvider>
