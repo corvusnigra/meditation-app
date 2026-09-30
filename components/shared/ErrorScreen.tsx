@@ -49,7 +49,7 @@ export function ErrorScreen() {
                 Удалит все сессии, настройки и уровень. Действие необратимо.
               </p>
               <div className="flex justify-center gap-2">
-                <Button variant="ghost" size="sm" onClick={resetData}>
+                <Button variant="danger" size="sm" onClick={resetData}>
                   Да, удалить
                 </Button>
                 <Button

@@ -11,6 +11,12 @@ export function formatTime(seconds: number): string {
   return `${m}:${s.toString().padStart(2, '0')}`;
 }
 
+// Оценка длительности для подписей: до полутора минут — в секундах с шагом 5.
+export function formatApproxDuration(seconds: number): string {
+  if (seconds < 90) return `≈ ${Math.max(Math.round(seconds / 5) * 5, 5)} сек`;
+  return `≈ ${Math.round(seconds / 60)} мин`;
+}
+
 // Русская плюрализация: plural(2, ['цикл', 'цикла', 'циклов']).
 export function plural(
   n: number,

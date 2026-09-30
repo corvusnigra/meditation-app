@@ -65,9 +65,8 @@ export const DEFAULT_SETTINGS: UserSettings = {
   hapticsEnabled: true,
   hapticGuideEnabled: false,
   entrainmentEnabled: false,
-  theme: 'dark',
   breathingPattern: DEFAULT_BREATHING_PATTERN,
-  reducedMotion: false,
+  motionPref: 'system',
 };
 
 export const GROUNDING_SENSES: Array<{
@@ -116,7 +115,7 @@ export const GROUNDING_SENSES: Array<{
     prompts: {
       morning: 'Различите 2 запаха. Кофе, простыни, утренний воздух...',
       commute: 'Различите 2 запаха. Воздух с улицы, ткань одежды...',
-      sunset: 'Различите 2 запаха. Что-то остался от ужина, кожа...',
+      sunset: 'Различите 2 запаха. Что-то осталось от ужина, кожа...',
       custom: 'Попробуйте различить 2 запаха.',
     },
   },
@@ -155,18 +154,18 @@ export const SCENARIO_LABEL: Record<Scenario, string> = {
 };
 
 export const SCENARIO_DESCRIPTION: Record<Scenario, string> = {
-  morning: 'Morning Edge — до телефона',
-  commute: 'Commute Reset — пауза в движении',
-  sunset: 'Digital Sunset — закрыть вкладки',
+  morning: 'Ясное утро — до телефона',
+  commute: 'Перезагрузка в пути — пауза в движении',
+  sunset: 'Цифровой закат — закрыть вкладки',
   custom: 'Без сценария',
 };
 
 export const COMPLETION_QUOTES: string[] = [
-  'Mental fitness — это не пункт назначения, а практика.',
+  'Ментальная форма — это не пункт назначения, а практика.',
   'Вы показались на тренировке. Этого достаточно.',
-  '5 минут внимания — это уже выбор.',
+  'Несколько минут внимания — это уже выбор.',
   'Маленькие шаги меняют нервную систему больше, чем большие планы.',
-  'Сегодня вы выбрали себя на пять минут.',
+  'Сегодня вы выбрали себя на несколько минут.',
 ];
 
 export const DECLINE_GRACE_DAYS = 3;

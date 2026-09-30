@@ -27,7 +27,7 @@ const PHASE_ORDER: BreathingPhase[] = ['inhale', 'holdIn', 'exhale', 'holdOut'];
 export default function BreathingPage() {
   const router = useRouter();
   const { state, advance, pause, resume } = useSession();
-  const { settings } = useSettings();
+  const { settings, reducedMotion } = useSettings();
   const { durations } = useProgressionContext();
   const [showPause, setShowPause] = useState(false);
   const phaseHaptics = usePhaseHaptics(
@@ -136,7 +136,11 @@ export default function BreathingPage() {
     <PageShell>
       <div className="space-y-4">
         <PhaseProgressBar currentPhase="breathing" phaseProgress={timer.progress} />
-        <BreathingTimer remainingSec={Math.ceil(timer.remaining)} totalSec={totalSec} />
+        <BreathingTimer
+          remainingSec={Math.ceil(timer.remaining)}
+          totalSec={totalSec}
+          label={`Дыхание по квадрату ${settings.breathingPattern.join('–')}`}
+        />
       </div>
 
       <motion.div
@@ -149,7 +153,7 @@ export default function BreathingPage() {
           phase={phase}
           pattern={settings.breathingPattern}
           active={active}
-          reducedMotion={settings.reducedMotion}
+          reducedMotion={reducedMotion}
         />
         <BreathingGuide
           phase={phase}

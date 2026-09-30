@@ -4,7 +4,8 @@ import { motion } from 'framer-motion';
 import { LEVEL_DURATIONS, LEVEL_LABEL } from '@/lib/constants';
 import type { ProgressionLevel } from '@/lib/types';
 import { HapticButton } from '@/components/shared/HapticButton';
-import { plural } from '@/lib/utils';
+import { cardClass } from '@/components/ui/Card';
+import { cn, plural } from '@/lib/utils';
 
 type Props = {
   nextLevel: ProgressionLevel;
@@ -22,7 +23,7 @@ export function UpgradeBanner({ nextLevel, streak, onAccept, onDecline }: Props)
       initial={{ y: 12, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ delay: 0.4 }}
-      className="rounded-3xl border border-accent-breathing/30 bg-accent-breathing/5 p-5 text-left"
+      className={cn(cardClass({ tone: 'breathing' }), 'p-5 text-left')}
     >
       <p className="text-sm text-accent-breathing mb-1">
         🌱 {streak} {plural(streak, ['день', 'дня', 'дней'])} подряд — впечатляет
@@ -45,7 +46,7 @@ export function UpgradeBanner({ nextLevel, streak, onAccept, onDecline }: Props)
           фазам, ничего нового изучать не нужно.
         </p>
       )}
-      <div className="flex gap-2">
+      <div className="flex flex-wrap gap-2">
         <HapticButton onClick={onAccept} size="sm" haptic="success">
           Попробую
         </HapticButton>

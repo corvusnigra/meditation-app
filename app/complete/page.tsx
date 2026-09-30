@@ -1,11 +1,10 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { PageShell } from '@/components/shared/PageShell';
-import { HapticButton } from '@/components/shared/HapticButton';
+import { HapticButton, HapticLink } from '@/components/shared/HapticButton';
+import { cardClass } from '@/components/ui/Card';
 import { StreakCounter } from '@/components/history/StreakCounter';
 import { UpgradeBanner } from '@/components/progression/UpgradeBanner';
 import { useHistory } from '@/context/HistoryContext';
@@ -14,13 +13,13 @@ import { useProgressionContext } from '@/context/ProgressionContext';
 import { useHaptics } from '@/hooks/useHaptics';
 import { useSettings } from '@/context/SettingsContext';
 import { COMPLETION_QUOTES } from '@/lib/constants';
-import { pickRandom } from '@/lib/utils';
+import { cn, pickRandom, plural } from '@/lib/utils';
 
 export default function CompletePage() {
-  const router = useRouter();
-  const { sessions, streak } = useHistory();
+  const { sessions, streak, lastRitual } = useHistory();
   const { state, reset } = useSession();
-  const { upgradeOffer, acceptUpgrade, declineUpgrade } = useProgressionContext();
+  const { durations, upgradeOffer, acceptUpgrade, declineUpgrade } =
+    useProgressionContext();
   const { settings } = useSettings();
   const haptics = useHaptics(settings.hapticsEnabled);
 
@@ -29,6 +28,12 @@ export default function CompletePage() {
     sessions[sessions.length - 1]?.gratitudeText ||
     '';
   const [canShare, setCanShare] = useState(false);
+
+  const levelMinutes = Math.round(durations.total / 60);
+  // Сколько длился только что законченный ритуал — по записи в истории.
+  const sessionMinutes = lastRitual
+    ? Math.max(Math.round(lastRitual.durationMs / 60000), 1)
+    : null;
 
   useEffect(() => {
     haptics('success');
@@ -50,7 +55,9 @@ export default function CompletePage() {
       try {
         await navigator.share({
           title: 'Микро-осознанность',
-          text: `${streak} ${streak === 1 ? 'день' : 'дней'} подряд по 5 минут.`,
+          text:
+            `${streak} ${plural(streak, ['день', 'дня', 'дней'])} подряд — ` +
+            `по ${levelMinutes} ${plural(levelMinutes, ['минуте', 'минуты', 'минут'])}.`,
         });
       } catch {
         // user dismissed
@@ -93,7 +100,11 @@ export default function CompletePage() {
           transition={{ delay: 0.4 }}
         >
           <h1 className="text-3xl font-medium mb-2">Готово.</h1>
-          <p className="text-text-secondary">5 минут — и вы здесь.</p>
+          <p className="text-text-secondary">
+            {sessionMinutes
+              ? `${sessionMinutes} ${plural(sessionMinutes, ['минута', 'минуты', 'минут'])} — и вы здесь.`
+              : 'Вы здесь.'}
+          </p>
         </motion.div>
 
         {streak > 0 && <StreakCounter count={streak} />}
@@ -112,9 +123,9 @@ export default function CompletePage() {
             initial={{ y: 8, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 1 }}
-            className="rounded-2xl bg-bg-card/60 border border-white/5 p-4 max-w-xs"
+            className={cn(cardClass(), 'p-4 max-w-xs')}
           >
-            <p className="text-xs uppercase tracking-widest text-accent-gratitude mb-2">
+            <p className="text-xs uppercase tracking-wider text-accent-gratitude mb-2">
               Сегодняшняя благодарность
             </p>
             <p className="text-sm text-text-primary/80">«{lastGratitude}»</p>
@@ -134,25 +145,22 @@ export default function CompletePage() {
       )}
 
       <div className="flex flex-col gap-2 pb-6">
-        <Link href="/" className="block">
-          <HapticButton size="lg" className="w-full">
-            На главную
-          </HapticButton>
-        </Link>
+        <HapticLink href="/" size="lg" block>
+          На главную
+        </HapticLink>
         <div className="grid grid-cols-2 gap-2">
           {canShare && (
             <HapticButton variant="ghost" onClick={handleShare}>
               Поделиться
             </HapticButton>
           )}
-          <Link
+          <HapticLink
             href="/history"
-            className={canShare ? 'block' : 'block col-span-2'}
+            variant="ghost"
+            className={canShare ? undefined : 'col-span-2'}
           >
-            <HapticButton variant="ghost" className="w-full">
-              История
-            </HapticButton>
-          </Link>
+            История
+          </HapticLink>
         </div>
       </div>
     </PageShell>

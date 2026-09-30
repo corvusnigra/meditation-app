@@ -24,7 +24,7 @@ export function SenseCard({ icon, count, label, prompt, isLast, onNext }: Props)
       <div className="text-7xl mb-4" aria-hidden>
         {icon}
       </div>
-      <div className="text-xs uppercase tracking-[0.2em] text-text-secondary mb-2">
+      <div className="text-xs uppercase tracking-wider text-text-secondary mb-2">
         {label}
       </div>
       <div className="text-5xl font-light text-accent-grounding mb-6 tabular-nums">

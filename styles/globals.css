@@ -4,38 +4,21 @@
 
 :root {
   color-scheme: dark;
-  --bg-primary: #0F1729;
-  --bg-secondary: #1A2340;
-  --bg-card: #1E2A45;
-  --text-primary: #E8ECF4;
-  --text-secondary: #8B95A8;
-  --accent-breathing: #4ECDC4;
-  --accent-grounding: #7C8CF8;
-  --accent-gratitude: #F4A261;
-  --accent-streak: #E07A5F;
-  --success: #6BCB77;
-}
-
-:root.light {
-  color-scheme: light;
-  --bg-primary: #F4F6FB;
-  --bg-secondary: #E6EBF5;
-  --bg-card: #FFFFFF;
-  --text-primary: #1A2340;
-  --text-secondary: #5A6378;
 }
 
 html,
 body {
   background: radial-gradient(
       ellipse at top,
-      color-mix(in srgb, var(--bg-secondary) 90%, transparent) 0%,
-      var(--bg-primary) 60%
+      theme('colors.bg.secondary / 90%') 0%,
+      theme('colors.bg.primary') 60%
     );
-  background-color: var(--bg-primary);
-  color: var(--text-primary);
+  background-color: theme('colors.bg.primary');
+  color: theme('colors.text.primary');
   min-height: 100%;
   -webkit-tap-highlight-color: transparent;
+  /* Масштаб щипком разрешён, а двойной тап не приближает и не задерживает нажатие. */
+  touch-action: manipulation;
 }
 
 body {
@@ -43,7 +26,27 @@ body {
   letter-spacing: -0.01em;
 }
 
-/* Breathing keyframes — driven by CSS variable --breath-duration */
+:focus-visible {
+  outline: 2px solid theme('colors.accent.breathing');
+  outline-offset: 2px;
+}
+
+@layer utilities {
+  /* Зона нажатия не меньше 44 px без сдвига вёрстки: её добирает невидимый ::after. */
+  .tap-target {
+    position: relative;
+  }
+  .tap-target::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: max(100%, 44px);
+    height: max(100%, 44px);
+    transform: translate(-50%, -50%);
+  }
+}
+
 @keyframes breath-scale {
   0% { transform: scale(0.55); }
   25% { transform: scale(1); }
@@ -52,98 +55,134 @@ body {
   100% { transform: scale(0.55); }
 }
 
-@keyframes breath-glow {
-  0%   { box-shadow: 0 0 60px -10px rgba(78, 205, 196, 0.25); }
-  25%  { box-shadow: 0 0 110px -8px rgba(78, 205, 196, 0.7); }
-  50%  { box-shadow: 0 0 110px -8px rgba(78, 205, 196, 0.7); }
-  75%  { box-shadow: 0 0 50px -12px rgba(78, 205, 196, 0.2); }
-  100% { box-shadow: 0 0 50px -12px rgba(78, 205, 196, 0.2); }
+@keyframes breath-halo {
+  0% { opacity: 0; }
+  25% { opacity: 1; }
+  50% { opacity: 1; }
+  75% { opacity: 0; }
+  100% { opacity: 0; }
 }
 
 .breath-circle {
-  animation: breath-scale var(--breath-duration, 16s) ease-in-out infinite,
-             breath-glow var(--breath-duration, 16s) ease-in-out infinite;
-  will-change: transform, box-shadow;
+  position: relative;
+  animation: breath-scale 16s ease-in-out infinite;
+  will-change: transform;
 }
 
+/* Свечение на вдохе: тень статична, анимируется только прозрачность слоя. */
+.breath-circle::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: 0 0 110px -8px theme('colors.accent.breathing / 60%');
+  opacity: 0;
+  animation: breath-halo 16s ease-in-out infinite;
+  will-change: opacity;
+  pointer-events: none;
+}
+
+/*
+ * Уменьшенное движение. data-motion на <html> ставит SettingsContext после гидрации:
+ * reduce — всегда, full — никогда, system или без атрибута — как в системе.
+ */
 @media (prefers-reduced-motion: reduce) {
-  .breath-circle {
+  :root:not([data-motion='full']) .breath-circle {
     animation: none;
     transform: scale(0.85);
   }
-  *, *::before, *::after {
+  :root:not([data-motion='full']) .breath-circle::after {
+    animation: none;
+    opacity: 0.5;
+  }
+  :root:not([data-motion='full']) *,
+  :root:not([data-motion='full']) *::before,
+  :root:not([data-motion='full']) *::after {
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
   }
 }
 
-/* Ambient bg pulse */
+:root[data-motion='reduce'] .breath-circle {
+  animation: none;
+  transform: scale(0.85);
+}
+:root[data-motion='reduce'] .breath-circle::after {
+  animation: none;
+  opacity: 0.5;
+}
+:root[data-motion='reduce'] *,
+:root[data-motion='reduce'] *::before,
+:root[data-motion='reduce'] *::after {
+  animation-duration: 0.01ms !important;
+  transition-duration: 0.01ms !important;
+}
+
 .ambient-bg {
   background: radial-gradient(
       ellipse at center,
-      color-mix(in srgb, var(--phase-color, var(--accent-breathing)) 18%, transparent) 0%,
+      color-mix(
+          in srgb,
+          var(--phase-color, theme('colors.accent.breathing')) 18%,
+          transparent
+        )
+        0%,
       transparent 70%
     ),
-    var(--bg-primary);
+    theme('colors.bg.primary');
   transition: background 1.2s ease;
 }
 
-/* Custom slider */
+/* Ползунок: поле высотой 44 px под палец, дорожка — 6 px. */
 input[type='range'].mm-slider {
   -webkit-appearance: none;
+  appearance: none;
+  height: 44px;
+  background: transparent;
+  cursor: pointer;
+}
+input[type='range'].mm-slider:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+input[type='range'].mm-slider::-webkit-slider-runnable-track {
   height: 6px;
   border-radius: 999px;
-  background: color-mix(in srgb, var(--text-secondary) 35%, transparent);
-  outline: none;
+  background: theme('colors.text.secondary / 35%');
+}
+input[type='range'].mm-slider::-moz-range-track {
+  height: 6px;
+  border-radius: 999px;
+  background: theme('colors.text.secondary / 35%');
 }
 input[type='range'].mm-slider::-webkit-slider-thumb {
   -webkit-appearance: none;
-  width: 18px;
-  height: 18px;
+  box-sizing: border-box;
+  width: 22px;
+  height: 22px;
+  margin-top: -8px;
   border-radius: 50%;
-  background: var(--accent-breathing);
-  cursor: pointer;
-  border: 2px solid var(--bg-primary);
+  background: theme('colors.accent.breathing');
+  border: 2px solid theme('colors.bg.primary');
 }
 input[type='range'].mm-slider::-moz-range-thumb {
-  width: 18px;
-  height: 18px;
+  box-sizing: border-box;
+  width: 22px;
+  height: 22px;
   border-radius: 50%;
-  background: var(--accent-breathing);
-  cursor: pointer;
-  border: 2px solid var(--bg-primary);
+  background: theme('colors.accent.breathing');
+  border: 2px solid theme('colors.bg.primary');
 }
-
-/* Toggle */
-.mm-toggle {
-  position: relative;
-  display: inline-flex;
-  width: 44px;
-  height: 24px;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--text-secondary) 40%, transparent);
-  transition: background 200ms ease;
-  cursor: pointer;
-  flex-shrink: 0;
+input[type='range'].mm-slider:focus-visible {
+  outline: none;
 }
-.mm-toggle::after {
-  content: '';
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: var(--text-primary);
-  transition: transform 200ms ease;
+input[type='range'].mm-slider:focus-visible::-webkit-slider-thumb {
+  box-shadow: 0 0 0 3px theme('colors.accent.breathing / 45%');
 }
-.mm-toggle[data-on='true'] {
-  background: var(--accent-breathing);
-}
-.mm-toggle[data-on='true']::after {
-  transform: translateX(20px);
+input[type='range'].mm-slider:focus-visible::-moz-range-thumb {
+  box-shadow: 0 0 0 3px theme('colors.accent.breathing / 45%');
 }
 
 ::selection {
-  background: color-mix(in srgb, var(--accent-breathing) 40%, transparent);
+  background: theme('colors.accent.breathing / 40%');
 }

@@ -5,7 +5,7 @@ import { formatTime } from '@/lib/utils';
 type Props = {
   remainingSec: number;
   totalSec: number;
-  label?: string;
+  label: string;
 };
 
 export function BreathingTimer({ remainingSec, totalSec, label }: Props) {
@@ -13,8 +13,8 @@ export function BreathingTimer({ remainingSec, totalSec, label }: Props) {
   return (
     <div className="w-full">
       <div className="flex items-baseline justify-between mb-2">
-        <span className="text-xs uppercase tracking-widest text-text-secondary truncate pr-2">
-          {label ?? 'Box Breathing 4–4–4–4'}
+        <span className="text-xs uppercase tracking-wider text-text-secondary truncate pr-2">
+          {label}
         </span>
         <span className="font-mono text-sm text-text-secondary tabular-nums">
           {formatTime(remainingSec)}

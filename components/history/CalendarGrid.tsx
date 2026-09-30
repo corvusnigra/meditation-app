@@ -1,21 +1,45 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { getMonthGrid, isoDayKey } from '@/lib/utils';
+import { Button } from '@/components/ui/Button';
+import { cn, dayKeyToDate, getMonthGrid, isoDayKey } from '@/lib/utils';
 import type { CompletedSession } from '@/lib/types';
-import { cn } from '@/lib/utils';
 
 type Props = {
   sessions: CompletedSession[];
+  // Ключ сегодняшнего дня. До монтирования — null: при пререндере «сегодня»
+  // было бы днём сборки, а не днём человека.
+  today: string | null;
   onSelect?: (iso: string) => void;
 };
 
 const WEEKDAYS = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
 
-export function CalendarGrid({ sessions, onSelect }: Props) {
-  const [cursor, setCursor] = useState(() => new Date());
-  const cells = useMemo(() => getMonthGrid(cursor), [cursor]);
-  const todayKey = isoDayKey(new Date());
+// Отметка прижата к низу ячейки и не сдвигает число: числа в ряду стоят на одной линии.
+const MARK_IN_CELL = 'absolute bottom-0.5 left-1/2 -translate-x-1/2';
+
+function monthTitle(month: Date): string {
+  const name = month.toLocaleDateString('ru-RU', { month: 'long' });
+  return `${name.charAt(0).toUpperCase()}${name.slice(1)} ${month.getFullYear()}`;
+}
+
+function dayTitle(iso: string): string {
+  return dayKeyToDate(iso).toLocaleDateString('ru-RU', {
+    day: 'numeric',
+    month: 'long',
+  });
+}
+
+export function CalendarGrid({ sessions, today, onSelect }: Props) {
+  const [monthOffset, setMonthOffset] = useState(0);
+
+  const month = useMemo(() => {
+    if (!today) return null;
+    const base = dayKeyToDate(today);
+    return new Date(base.getFullYear(), base.getMonth() + monthOffset, 1);
+  }, [today, monthOffset]);
+
+  const cells = useMemo(() => (month ? getMonthGrid(month) : null), [month]);
 
   const { ritualDays, techniqueOnlyDays } = useMemo(() => {
     const rituals = new Set<string>();
@@ -29,82 +53,122 @@ export function CalendarGrid({ sessions, onSelect }: Props) {
     return { ritualDays: rituals, techniqueOnlyDays: techniques };
   }, [sessions]);
 
-  const monthTitle = cursor.toLocaleDateString('ru-RU', {
-    month: 'long',
-    year: 'numeric',
-  });
-
   return (
     <div>
-      <div className="flex items-center justify-between mb-3">
-        <button
-          type="button"
-          onClick={() =>
-            setCursor((c) => new Date(c.getFullYear(), c.getMonth() - 1, 1))
-          }
-          className="text-text-secondary hover:text-text-primary px-2 py-1 rounded"
+      <div className="flex items-center justify-between mb-2">
+        <Button
+          variant="pill"
+          size="icon"
+          onClick={() => setMonthOffset((offset) => offset - 1)}
           aria-label="Предыдущий месяц"
         >
           ‹
-        </button>
-        <span className="text-sm capitalize">{monthTitle}</span>
-        <button
-          type="button"
-          onClick={() =>
-            setCursor((c) => new Date(c.getFullYear(), c.getMonth() + 1, 1))
-          }
-          className="text-text-secondary hover:text-text-primary px-2 py-1 rounded"
+        </Button>
+        <span className="text-sm">{month ? monthTitle(month) : ''}</span>
+        <Button
+          variant="pill"
+          size="icon"
+          onClick={() => setMonthOffset((offset) => offset + 1)}
           aria-label="Следующий месяц"
         >
           ›
-        </button>
+        </Button>
       </div>
       <div className="grid grid-cols-7 gap-1 mb-2">
         {WEEKDAYS.map((w) => (
           <span
             key={w}
-            className="text-[10px] uppercase tracking-widest text-text-secondary text-center"
+            className="text-xs uppercase tracking-wider text-text-secondary text-center"
           >
             {w}
           </span>
         ))}
       </div>
-      <div className="grid grid-cols-7 gap-1">
-        {cells.map((cell, i) => {
-          if (!cell) return <span key={i} className="aspect-square" />;
-          const ritual = ritualDays.has(cell.iso);
-          const techniqueOnly = techniqueOnlyDays.has(cell.iso);
-          const isToday = cell.iso === todayKey;
-          return (
-            <button
-              key={cell.iso}
-              type="button"
-              onClick={() => onSelect?.(cell.iso)}
-              className={cn(
-                'aspect-square rounded-lg flex flex-col items-center justify-center gap-0.5 text-xs',
-                'transition-colors',
-                isToday ? 'border border-accent-breathing/70' : 'border border-transparent',
-                ritual
-                  ? 'bg-success/15 text-success'
-                  : techniqueOnly
-                    ? 'bg-accent-gratitude/10 text-accent-gratitude'
-                    : 'bg-white/5 text-text-secondary hover:bg-white/10',
-              )}
-            >
-              <span>{cell.day}</span>
-              {ritual && (
-                <span className="w-1.5 h-1.5 rounded-full bg-success" aria-hidden />
-              )}
-              {!ritual && techniqueOnly && (
-                <span
-                  className="w-1.5 h-1.5 rounded-full bg-accent-gratitude"
-                  aria-hidden
-                />
-              )}
-            </button>
-          );
-        })}
-      </div>
+      {cells && today ? (
+        <div className="grid grid-cols-7 gap-1">
+          {cells.map((cell, i) => {
+            if (!cell) return <span key={i} className="aspect-square" />;
+            const ritual = ritualDays.has(cell.iso);
+            const techniqueOnly = techniqueOnlyDays.has(cell.iso);
+            // Ключи дней — YYYY-MM-DD, поэтому сравниваются как строки.
+            const isFuture = cell.iso > today;
+            const className = cn(
+              'relative aspect-square rounded-lg border flex items-center justify-center text-xs',
+              cell.iso === today ? 'border-accent-breathing/70' : 'border-transparent',
+              ritual
+                ? 'bg-success/15 text-success'
+                : techniqueOnly
+                  ? 'bg-accent-gratitude/10 text-accent-gratitude'
+                  : isFuture
+                    ? 'text-text-secondary'
+                    : 'bg-white/5 text-text-secondary',
+            );
+            const content = (
+              <>
+                <span>{cell.day}</span>
+                {ritual && <RitualMark className={MARK_IN_CELL} />}
+                {techniqueOnly && <TechniqueMark className={MARK_IN_CELL} />}
+              </>
+            );
+            // Нажимается только прошедший день с записями: по остальным
+            // фильтровать нечего.
+            if (isFuture || (!ritual && !techniqueOnly)) {
+              return (
+                <span key={cell.iso} className={className}>
+                  {content}
+                </span>
+              );
+            }
+            return (
+              <button
+                key={cell.iso}
+                type="button"
+                onClick={() => onSelect?.(cell.iso)}
+                aria-label={`${dayTitle(cell.iso)}: ${ritual ? 'ритуал' : 'только техника'}`}
+                className={cn(className, 'tap-target')}
+              >
+                {content}
+              </button>
+            );
+          })}
+        </div>
+      ) : (
+        <div className="aspect-[7/5]" />
+      )}
+      <ul className="mt-3 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-xs text-text-secondary">
+        <li className="flex items-center gap-1.5">
+          <RitualMark />
+          ритуал
+        </li>
+        <li className="flex items-center gap-1.5">
+          <TechniqueMark />
+          только техника
+        </li>
+        <li className="flex items-center gap-1.5">
+          <span
+            aria-hidden
+            className="h-3 w-3 rounded border border-accent-breathing/70"
+          />
+          сегодня
+        </li>
+      </ul>
     </div>
+  );
+}
+
+// Отметки различаются формой, а не только цветом: точка и кольцо.
+function RitualMark({ className }: { className?: string }) {
+  return <span aria-hidden className={cn('h-2 w-2 rounded-full bg-success', className)} />;
+}
+
+function TechniqueMark({ className }: { className?: string }) {
+  return (
+    <span
+      aria-hidden
+      className={cn(
+        'h-2 w-2 rounded-full border-[1.5px] border-accent-gratitude',
+        className,
+      )}
+    />
   );
 }

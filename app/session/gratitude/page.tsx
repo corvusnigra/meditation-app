@@ -87,8 +87,8 @@ export default function GratitudePage() {
           phaseProgress={progressForRing}
         />
         <div className="flex items-center justify-between text-xs text-text-secondary">
-          <span className="uppercase tracking-widest">
-            {reachedMinimum ? 'Минимум пройден' : 'Anchor'}
+          <span className="uppercase tracking-wider">
+            {reachedMinimum ? 'Минимум пройден' : 'До минимума'}
           </span>
           {reachedMinimum ? (
             <span className="text-accent-gratitude">можно записать или закончить</span>

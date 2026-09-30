@@ -1,7 +1,10 @@
 'use client';
 
+import { Card } from '@/components/ui/Card';
+import { TONE } from '@/components/ui/tones';
+import { findTechnique } from '@/lib/breathing-techniques';
 import { SCENARIO_LABEL, LEVEL_LABEL } from '@/lib/constants';
-import { formatLongDate } from '@/lib/utils';
+import { cn, formatLongDate } from '@/lib/utils';
 import type { CompletedSession } from '@/lib/types';
 
 type Props = {
@@ -14,10 +17,16 @@ export function SessionCard({ session }: Props) {
   const seconds = Math.round(session.durationMs / 1000);
   const durationLabel =
     isTechnique && seconds < 90 ? `${seconds} сек` : `${minutes} мин`;
+  // Имя — из каталога, чтобы старые записи показывали нынешнее название;
+  // у техник, которых в каталоге уже нет, остаётся сохранённое.
+  const techniqueName =
+    findTechnique(session.techniqueId)?.name ??
+    session.techniqueName ??
+    'Дыхательная техника';
 
   return (
-    <div className="rounded-2xl bg-bg-card/60 border border-white/5 p-4">
-      <div className="flex items-baseline justify-between mb-1">
+    <Card className="p-4">
+      <div className="flex items-baseline justify-between gap-3 mb-1">
         <span className="text-sm text-text-secondary">
           {formatLongDate(session.date)}
         </span>
@@ -27,28 +36,24 @@ export function SessionCard({ session }: Props) {
         </span>
       </div>
       <div
-        className={
-          'text-xs uppercase tracking-widest mb-2 ' +
-          (isTechnique ? 'text-accent-gratitude' : 'text-accent-grounding')
-        }
+        className={cn(
+          'text-xs uppercase tracking-wider mb-2',
+          isTechnique ? TONE.gratitude.text : TONE.grounding.text,
+        )}
       >
-        {isTechnique
-          ? `Техника · ${session.techniqueName ?? ''}`.trim()
-          : SCENARIO_LABEL[session.scenario]}
+        {isTechnique ? 'Техника' : SCENARIO_LABEL[session.scenario]}
       </div>
       {isTechnique ? (
-        <p className="text-sm text-text-secondary/80">
-          {session.techniqueName ?? 'Дыхательная техника'}
-        </p>
+        <p className="text-sm text-text-primary/80">{techniqueName}</p>
       ) : session.gratitudeText ? (
         <p className="text-sm text-text-primary/80 leading-relaxed">
           «{session.gratitudeText}»
         </p>
       ) : (
-        <p className="text-sm text-text-secondary/60 italic">
+        <p className="text-sm text-text-secondary italic">
           Без записи — просто подумал(а)
         </p>
       )}
-    </div>
+    </Card>
   );
 }

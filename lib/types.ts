@@ -8,7 +8,8 @@ export type ProgressionLevel = 1 | 2 | 3 | 4;
 
 export type AmbientPreset = 'ocean' | 'forest' | 'night' | 'silence';
 
-export type ThemeMode = 'dark' | 'light' | 'auto';
+// system — как в настройках устройства, reduce и full — явный выбор в приложении.
+export type MotionPref = 'system' | 'reduce' | 'full';
 
 export type SessionStatus =
   | 'idle'
@@ -105,11 +106,10 @@ export type BreathingTechnique = {
   purpose: string;
   // Сила доказательной базы (для сортировки и бейджа).
   evidence: TechniqueEvidence;
-  // Вынести в блок «Рекомендуем» наверху.
+  // Отметить в списке как технику, с которой стоит начать.
   recommended?: boolean;
   description: string;
   source?: string;
-  durationLabel: string;
   config:
     | BoxTechniqueConfig
     | SighTechniqueConfig
@@ -125,9 +125,8 @@ export type UserSettings = {
   hapticsEnabled: boolean;
   hapticGuideEnabled: boolean;
   entrainmentEnabled: boolean;
-  theme: ThemeMode;
   breathingPattern: [number, number, number, number];
-  reducedMotion: boolean;
+  motionPref: MotionPref;
 };
 
 export type CustomDurations = {

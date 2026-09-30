@@ -19,6 +19,14 @@ const SCALE: Record<BreathingPhase, number> = {
   holdOut: 0.55,
 };
 
+// При уменьшенном движении круг не меняет размер — фазу показывает прозрачность.
+const REDUCED_OPACITY: Record<BreathingPhase, number> = {
+  inhale: 1,
+  holdIn: 1,
+  exhale: 0.5,
+  holdOut: 0.5,
+};
+
 // Внешнее кольцо на вдохе растёт в 1.45 раза. Базовый размер колец ограничен так,
 // чтобы на пике оно помещалось в ширину экрана с полями по 16px.
 const RING_FIT = 'calc((100vw - 32px) / 1.45)';
@@ -74,6 +82,7 @@ export function BreathingCircle({ phase, pattern, active, reducedMotion }: Props
         initial={{ scale: reducedMotion ? 0.85 : SCALE.exhale }}
         animate={{
           scale: active && !reducedMotion ? SCALE[phase] : 0.85,
+          opacity: reducedMotion ? REDUCED_OPACITY[phase] : 1,
         }}
         transition={transition}
         style={{ width: 200, height: 200 }}

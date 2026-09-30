@@ -3,12 +3,12 @@ import type {
   AmbientPreset,
   CompletedSession,
   CustomDurations,
+  MotionPref,
   PhaseId,
   ProgressionLevel,
   ProgressionState,
   Scenario,
   TechniqueLevels,
-  ThemeMode,
   UserSettings,
 } from './types';
 import { clamp } from './utils';
@@ -21,7 +21,7 @@ const SCENARIOS: readonly Scenario[] = ['morning', 'commute', 'sunset', 'custom'
 const PHASES: readonly PhaseId[] = ['breathing', 'grounding', 'gratitude'];
 const LEVELS: readonly ProgressionLevel[] = [1, 2, 3, 4];
 const AMBIENT_PRESETS: readonly AmbientPreset[] = ['ocean', 'forest', 'night', 'silence'];
-const THEMES: readonly ThemeMode[] = ['dark', 'light', 'auto'];
+const MOTION_PREFS: readonly MotionPref[] = ['system', 'reduce', 'full'];
 
 // Тот же диапазон, что у ползунков в components/progression/DurationSliders.tsx.
 const CUSTOM_DURATION_MIN_SEC = 60;
@@ -96,6 +96,15 @@ function isBreathingPattern(
   );
 }
 
+// До motionPref хранился флаг reducedMotion. Включённый означает явный выбор;
+// выключенный записывался и без участия человека, поэтому читается как «как в системе».
+function motionPrefOf(raw: Dict, fallback: MotionPref): MotionPref {
+  if (oneOf(raw.motionPref, MOTION_PREFS)) return raw.motionPref;
+  return raw.reducedMotion === true ? 'reduce' : fallback;
+}
+
+// Собирается по полям этой версии, поэтому ушедшие поля (theme, reducedMotion)
+// отбрасываются сами.
 export function normalizeSettings(raw: unknown): UserSettings {
   if (!isDict(raw)) return { ...DEFAULT_SETTINGS };
   const d = DEFAULT_SETTINGS;
@@ -113,11 +122,10 @@ export function normalizeSettings(raw: unknown): UserSettings {
     hapticsEnabled: bool(raw.hapticsEnabled, d.hapticsEnabled),
     hapticGuideEnabled: bool(raw.hapticGuideEnabled, d.hapticGuideEnabled),
     entrainmentEnabled: bool(raw.entrainmentEnabled, d.entrainmentEnabled),
-    theme: oneOf(raw.theme, THEMES) ? raw.theme : d.theme,
     breathingPattern: isBreathingPattern(raw.breathingPattern)
       ? raw.breathingPattern
       : d.breathingPattern,
-    reducedMotion: bool(raw.reducedMotion, d.reducedMotion),
+    motionPref: motionPrefOf(raw, d.motionPref),
   };
 }
 

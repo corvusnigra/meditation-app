@@ -14,9 +14,6 @@ export function GratitudePrompt({ prompt }: Props) {
       transition={{ delay: 0.1 }}
       className="text-center px-2"
     >
-      <p className="text-xs uppercase tracking-[0.25em] text-text-secondary mb-3">
-        Благодарность
-      </p>
       <p className="text-base sm:text-lg text-text-primary/90 leading-relaxed">
         {prompt}
       </p>

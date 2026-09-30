@@ -85,7 +85,7 @@ export default function GroundingPage() {
       <div className="space-y-4">
         <PhaseProgressBar currentPhase="grounding" phaseProgress={timer.progress} />
         <div className="flex items-center justify-between text-xs text-text-secondary">
-          <span className="uppercase tracking-widest">5–4–3–2–1</span>
+          <span className="uppercase tracking-wider">5–4–3–2–1</span>
           {timeUp ? (
             <span className="text-accent-grounding">
               не спешите — закончите шаг

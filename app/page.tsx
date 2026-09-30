@@ -127,7 +127,7 @@ export default function HomePage() {
               <div className="text-sm font-medium text-text-primary">
                 {SCENARIO_LABEL[s]}
               </div>
-              <div className="text-[11px] text-text-secondary mt-0.5">
+              <div className="text-xs text-text-secondary mt-0.5">
                 {SCENARIO_DESCRIPTION[s]}
               </div>
             </button>
@@ -143,7 +143,7 @@ export default function HomePage() {
                 <div className="text-sm font-medium text-text-primary">
                   Дыхательная техника по состоянию
                 </div>
-                <div className="text-[11px] text-text-secondary mt-1">
+                <div className="text-xs text-text-secondary mt-1">
                   Тревога · Сон · Фокус · Энергия
                 </div>
               </div>

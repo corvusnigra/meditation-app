@@ -1,17 +1,18 @@
 'use client';
 
-import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import { PageShell } from '@/components/shared/PageShell';
+import { PageHeader } from '@/components/shared/PageHeader';
+import { HapticButton } from '@/components/shared/HapticButton';
+import { Card } from '@/components/ui/Card';
 import { StreakCounter } from '@/components/history/StreakCounter';
 import { CalendarGrid } from '@/components/history/CalendarGrid';
 import { SessionCard } from '@/components/history/SessionCard';
 import { useHistory } from '@/context/HistoryContext';
-import { isoDayKey } from '@/lib/utils';
-import { HapticButton } from '@/components/shared/HapticButton';
+import { dayKeyToDate, isoDayKey, plural } from '@/lib/utils';
 
 export default function HistoryPage() {
-  const { sessions, streak, longest, totalMinutes, hydrated } = useHistory();
+  const { sessions, streak, longest, totalMinutes, todayKey, hydrated } = useHistory();
   const [filterDay, setFilterDay] = useState<string | null>(null);
 
   const recent = useMemo(() => {
@@ -22,14 +23,16 @@ export default function HistoryPage() {
 
   const challengeProgress = Math.min(streak, 7);
 
+  const listTitle = filterDay
+    ? dayKeyToDate(filterDay).toLocaleDateString('ru-RU', {
+        day: 'numeric',
+        month: 'long',
+      })
+    : 'Последние сессии';
+
   return (
     <PageShell>
-      <header className="flex items-center justify-between mb-6 text-sm">
-        <Link href="/" className="text-text-secondary hover:text-text-primary transition-colors">
-          ← Главная
-        </Link>
-        <span className="text-text-secondary">История</span>
-      </header>
+      <PageHeader back={{ href: '/', label: 'Главная' }} title="История" />
 
       <section className="text-center mb-6">
         <StreakCounter count={streak} />
@@ -37,7 +40,7 @@ export default function HistoryPage() {
 
       {hydrated && streak > 0 && (
         <section className="mb-6">
-          <p className="text-xs uppercase tracking-widest text-text-secondary mb-2">
+          <p className="text-xs uppercase tracking-wider text-text-secondary mb-2">
             Челлендж 7 дней
           </p>
           <div className="flex gap-1.5">
@@ -59,19 +62,29 @@ export default function HistoryPage() {
       )}
 
       <section className="mb-6">
-        <CalendarGrid sessions={sessions} onSelect={(iso) => setFilterDay((prev) => (prev === iso ? null : iso))} />
+        <CalendarGrid
+          sessions={sessions}
+          today={hydrated ? todayKey : null}
+          onSelect={(iso) => setFilterDay((prev) => (prev === iso ? null : iso))}
+        />
       </section>
 
       <section className="grid grid-cols-3 gap-2 mb-6">
-        <Stat label="Сессии" value={sessions.length} />
+        <Stat
+          label={plural(sessions.length, ['Сессия', 'Сессии', 'Сессий'])}
+          value={sessions.length}
+        />
         <Stat label="Лучшая серия" value={longest} suffix="дн." />
-        <Stat label="Минуты" value={totalMinutes} />
+        <Stat
+          label={plural(totalMinutes, ['Минута', 'Минуты', 'Минут'])}
+          value={totalMinutes}
+        />
       </section>
 
       <section className="space-y-3 pb-6">
-        <div className="flex items-baseline justify-between">
-          <h2 className="text-sm uppercase tracking-widest text-text-secondary">
-            {filterDay ? 'За день' : 'Последние сессии'}
+        <div className="flex min-h-11 items-center justify-between gap-3">
+          <h2 className="text-xs uppercase tracking-wider text-text-secondary">
+            {listTitle}
           </h2>
           {filterDay && (
             <HapticButton variant="pill" size="sm" onClick={() => setFilterDay(null)}>
@@ -91,14 +104,14 @@ export default function HistoryPage() {
 
 function Stat({ label, value, suffix }: { label: string; value: number; suffix?: string }) {
   return (
-    <div className="rounded-2xl bg-bg-card/60 border border-white/5 p-3 text-center">
+    <Card className="p-3 text-center">
       <div className="text-xl font-medium tabular-nums">
         {value}
         {suffix && <span className="text-sm text-text-secondary ml-1">{suffix}</span>}
       </div>
-      <div className="text-[11px] uppercase tracking-widest text-text-secondary mt-1">
+      <div className="text-xs uppercase tracking-wider text-text-secondary mt-1">
         {label}
       </div>
-    </div>
+    </Card>
   );
 }

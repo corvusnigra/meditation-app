@@ -93,7 +93,7 @@ function RunningBox({
   onFinish: () => void;
 }) {
   const router = useRouter();
-  const { settings } = useSettings();
+  const { settings, reducedMotion } = useSettings();
   const { add } = useHistory();
   const { state: progression } = useProgressionContext();
   const haptics = useHaptics(settings.hapticsEnabled);
@@ -225,7 +225,7 @@ function RunningBox({
           phase={phase}
           pattern={pattern}
           active={active}
-          reducedMotion={settings.reducedMotion}
+          reducedMotion={reducedMotion}
         />
         {phaseDuration > 0 ? (
           <BreathingGuide
@@ -381,7 +381,7 @@ function FeedbackButton({
       <span className="text-xl" aria-hidden>
         {emoji}
       </span>
-      <span className="text-[11px] text-text-secondary leading-tight text-center">
+      <span className="text-xs text-text-secondary leading-tight text-center">
         {label}
       </span>
     </button>

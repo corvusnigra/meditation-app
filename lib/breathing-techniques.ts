@@ -14,14 +14,13 @@ export const TECHNIQUES: Record<BreathingTechniqueId, BreathingTechnique> = {
     category: 'anxiety',
     isPrimary: true,
     name: 'Физиологический вздох',
-    tagline: 'Два вдоха носом + длинный выдох ртом',
+    tagline: 'Два вдоха носом\u00A0+ длинный выдох ртом',
     purpose: 'Сбросить тревогу за минуту',
     evidence: 'strong',
     recommended: true,
     description:
-      'Самый быстрый способ сбить возбуждение нервной системы. Эффект приходит за 30–60 секунд. Подходит когда нет минуты сесть.',
+      'Самый быстрый способ сбить возбуждение нервной системы: хватает нескольких вздохов. Подходит, когда нет минуты сесть.',
     source: 'Huberman / Balban et al., Cell Reports Medicine 2023',
-    durationLabel: '30–60 секунд',
     config: { kind: 'sigh', cycles: 3 },
   },
 
@@ -30,12 +29,11 @@ export const TECHNIQUES: Record<BreathingTechniqueId, BreathingTechnique> = {
     category: 'sleep',
     isPrimary: true,
     name: '4-7-8 на засыпание',
-    tagline: 'Вдох 4 · задержка 7 · выдох ртом 8',
+    tagline: 'Вдох\u00A04 · задержка\u00A07 · выдох ртом\u00A08',
     purpose: 'Помогает уснуть',
     evidence: 'moderate',
     description:
-      'Та же техника, но 8 циклов лёжа на спине. Удлинённый выдох тормозит нервную систему и помогает уснуть.',
-    durationLabel: '~3 мин',
+      'Вдох на 4, задержка на 7, выдох ртом на 8 — лёжа на спине. Удлинённый выдох тормозит нервную систему и помогает уснуть.',
     config: {
       kind: 'box',
       pattern: [4, 7, 8, 0],
@@ -55,13 +53,12 @@ export const TECHNIQUES: Record<BreathingTechniqueId, BreathingTechnique> = {
     id: 'box-4-4-4-4',
     category: 'focus',
     isPrimary: true,
-    name: 'Box Breathing 4-4-4-4',
-    tagline: 'Вдох 4 · задержка 4 · выдох 4 · задержка 4',
+    name: 'Квадратное дыхание',
+    tagline: 'Вдох\u00A04 · задержка\u00A04 · выдох\u00A04 · задержка\u00A04',
     purpose: 'Собранность под давлением',
     evidence: 'moderate',
     description:
       '«Квадратное дыхание» из подготовки спецназа. Даёт спокойный фокус. 2–5 минут перед сложной задачей.',
-    durationLabel: '~2 мин',
     config: {
       kind: 'box',
       pattern: [4, 4, 4, 4],
@@ -81,13 +78,12 @@ export const TECHNIQUES: Record<BreathingTechniqueId, BreathingTechnique> = {
     category: 'focus',
     isPrimary: false,
     name: 'Когерентное 6/6',
-    tagline: 'Вдох 6 · выдох 6, ~5 дыханий/мин',
+    tagline: 'Вдох\u00A06 · выдох\u00A06, ~5\u00A0дыханий/мин',
     purpose: 'Тренировать стрессоустойчивость',
     evidence: 'strong',
     recommended: true,
     description:
       'Медленное ровное дыхание носом без задержек. Хорошо идёт фоном на длинных рабочих сессиях.',
-    durationLabel: '5+ мин',
     config: {
       kind: 'box',
       pattern: [6, 0, 6, 0],
@@ -107,13 +103,12 @@ export const TECHNIQUES: Record<BreathingTechniqueId, BreathingTechnique> = {
     category: 'energy',
     isPrimary: true,
     name: 'Метод Вим Хофа',
-    tagline: '3 раунда · 30 быстрых дыханий · задержка',
+    tagline: '3\u00A0раунда · 30\u00A0быстрых дыханий · задержка',
     purpose: 'Бодрость без кофе',
     evidence: 'emerging',
     description:
       '30 глубоких вдохов + пассивных выдохов, потом задержка на пустых лёгких, потом восстановительный вдох и 15 секунд задержки. Заменяет утренний кофе.',
     source: 'Wim Hof Method',
-    durationLabel: '5–7 мин',
     config: {
       kind: 'wim-hof',
       rounds: 3,
@@ -128,13 +123,12 @@ export const TECHNIQUES: Record<BreathingTechniqueId, BreathingTechnique> = {
     category: 'anxiety',
     isPrimary: false,
     name: 'Циклический вздох (5 мин)',
-    tagline: 'Полный протокол: 5 минут двойных вздохов',
+    tagline: 'Полный протокол: 5\u00A0минут двойных вздохов',
     purpose: 'Выровнять настроение за 5 минут',
     evidence: 'strong',
     description:
       'Та же механика, что у быстрого вздоха, но 5 минут подряд — ровно как в исследовании Стэнфорда (Balban, 2023), где из всех практик циклический вздох сильнее всего улучшал настроение и снижал частоту дыхания.',
     source: 'Balban et al., Cell Reports Medicine 2023',
-    durationLabel: '~5 мин',
     config: { kind: 'sigh', cycles: 40 },
   },
 
@@ -143,13 +137,12 @@ export const TECHNIQUES: Record<BreathingTechniqueId, BreathingTechnique> = {
     category: 'sleep',
     isPrimary: false,
     name: 'Мышечная релаксация',
-    tagline: 'Напрячь 6 секунд — отпустить 12, по группам мышц',
+    tagline: 'Напрячь 6\u00A0секунд\u00A0— отпустить 12, по группам мышц',
     purpose: 'Отпустить телесное напряжение',
     evidence: 'strong',
     description:
       'Прогрессивная мышечная релаксация по Джекобсону. Поочерёдно напрягаете и отпускаете группы мышц — тело учится различать напряжение и само сбрасывает его. Одна из самых проверенных техник для сна и тревоги.',
     source: 'Jacobson, 1938; современные протоколы PMR',
-    durationLabel: '~2.5 мин',
     config: {
       kind: 'pmr',
       tenseSec: 6,
@@ -214,9 +207,10 @@ export function techniquesByCategory(
   });
 }
 
-// Для блока «Рекомендуем» наверху страницы (в моменте + тренировка).
-export function recommendedTechniques(): BreathingTechnique[] {
-  return TECHNIQUES_LIST.filter((t) => t.recommended);
+// В истории встречаются техники, которых уже нет в каталоге, — для них undefined.
+export function findTechnique(id: string | undefined): BreathingTechnique | undefined {
+  if (!id) return undefined;
+  return (TECHNIQUES as Record<string, BreathingTechnique | undefined>)[id];
 }
 
 // --- Адаптивная прогрессия (только box-техники с лестницей) ---
@@ -263,4 +257,35 @@ export function adjustLevel(
   if (feedback === 'easy') return clampLevel(t, level + 1);
   if (feedback === 'hard') return clampLevel(t, level - 1);
   return clampLevel(t, level);
+}
+
+// --- Расчётная длительность ---
+
+// Один двойной вздох: вдох 1,5 с, довдох 0,5 с, выдох 5 с (hooks/useSighCycle.ts).
+const SIGH_CYCLE_SEC = 7;
+
+// Задержку на выдохе в методе Вим Хофа человек заканчивает сам;
+// для оценки берётся минута на раунд.
+const WIM_HOF_RETENTION_ESTIMATE_SEC = 60;
+
+// Сколько займёт техника на уровне level — по её конфигу, а не по подписи.
+export function techniqueDurationSec(t: BreathingTechnique, level: number): number {
+  const c = t.config;
+  switch (c.kind) {
+    case 'box': {
+      const step = effectiveStep(t, level);
+      return step.cycles * step.pattern.reduce((sum, sec) => sum + sec, 0);
+    }
+    case 'sigh':
+      return c.cycles * SIGH_CYCLE_SEC;
+    case 'wim-hof':
+      return (
+        c.rounds *
+        (c.breathsPerRound * c.breathCycleSec +
+          WIM_HOF_RETENTION_ESTIMATE_SEC +
+          c.recoveryHoldSec)
+      );
+    case 'pmr':
+      return c.groups.length * (c.tenseSec + c.releaseSec);
+  }
 }

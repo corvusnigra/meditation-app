@@ -46,7 +46,7 @@ export function PhaseProgressBar({ currentPhase, phaseProgress }: Props) {
           );
         })}
       </div>
-      <div className="flex justify-between mt-2 text-[11px] uppercase tracking-widest text-text-secondary">
+      <div className="flex justify-between mt-2 text-xs uppercase tracking-wide text-text-secondary">
         {PHASES.map((phase, idx) => (
           <span
             key={phase}

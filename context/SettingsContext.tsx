@@ -15,6 +15,8 @@ import { DEFAULT_SETTINGS } from '@/lib/constants';
 
 type SettingsContextValue = {
   settings: UserSettings;
+  // Итог settings.motionPref с учётом настройки устройства.
+  reducedMotion: boolean;
   update: (patch: Partial<UserSettings>) => void;
   reset: () => void;
   hydrated: boolean;
@@ -25,6 +27,7 @@ const SettingsContext = createContext<SettingsContextValue | null>(null);
 export function SettingsProvider({ children }: { children: ReactNode }) {
   const [settings, setSettings] = useState<UserSettings>(DEFAULT_SETTINGS);
   const [hydrated, setHydrated] = useState(false);
+  const [systemReducedMotion, setSystemReducedMotion] = useState(false);
 
   useEffect(() => {
     setSettings(settingsStorage.load());
@@ -32,26 +35,21 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const root = document.documentElement;
-    const mq = window.matchMedia('(prefers-color-scheme: light)');
-    const apply = () => {
-      const resolved =
-        settings.theme === 'auto'
-          ? mq.matches
-            ? 'light'
-            : 'dark'
-          : settings.theme;
-      if (resolved === 'light') root.classList.add('light');
-      else root.classList.remove('light');
-    };
-    apply();
-    if (settings.theme === 'auto') {
-      mq.addEventListener('change', apply);
-      return () => mq.removeEventListener('change', apply);
-    }
-    return undefined;
-  }, [settings.theme]);
+    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const sync = () => setSystemReducedMotion(mq.matches);
+    sync();
+    mq.addEventListener('change', sync);
+    return () => mq.removeEventListener('change', sync);
+  }, []);
+
+  // По этому атрибуту стили решают, уменьшать ли движение (styles/globals.css).
+  useEffect(() => {
+    document.documentElement.dataset.motion = settings.motionPref;
+  }, [settings.motionPref]);
+
+  const reducedMotion =
+    settings.motionPref === 'reduce' ||
+    (settings.motionPref === 'system' && systemReducedMotion);
 
   const update = useCallback((patch: Partial<UserSettings>) => {
     setSettings((prev) => {
@@ -67,8 +65,8 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const value = useMemo(
-    () => ({ settings, update, reset, hydrated }),
-    [settings, update, reset, hydrated],
+    () => ({ settings, reducedMotion, update, reset, hydrated }),
+    [settings, reducedMotion, update, reset, hydrated],
   );
 
   return <SettingsContext.Provider value={value}>{children}</SettingsContext.Provider>;

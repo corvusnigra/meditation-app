@@ -31,7 +31,7 @@ pnpm start
 
 ```
 app/                — страницы App Router (home, session/*, complete, history, settings)
-components/         — UI компоненты (breathing, grounding, gratitude, history, progression, shared, ui)
+components/         — UI компоненты (breathing, grounding, gratitude, history, progression, settings, shared, ui)
 context/            — React Context (Settings, History, Progression, Session)
 hooks/              — кастомные хуки (useTimer, useBreathingCycle, useBreathingAudio, useHaptics)
 lib/                — типы, константы, storage, progression, audio-presets, utils
