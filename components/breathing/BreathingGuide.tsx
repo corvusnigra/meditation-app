@@ -1,23 +1,23 @@
 'use client';
 
+import type { ReactNode } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import type { BreathingPhase } from '@/lib/types';
 
 type Props = {
   phase: BreathingPhase;
-  secondsInPhase: number;
-  phaseDuration: number;
+  // Сколько секунд осталось в фазе: число или компонент, читающий часы сам.
+  remaining: ReactNode;
 };
 
-const LABEL: Record<BreathingPhase, string> = {
+export const PHASE_LABEL: Record<BreathingPhase, string> = {
   inhale: 'Вдохните',
   holdIn: 'Задержите',
   exhale: 'Выдохните',
   holdOut: 'Задержите',
 };
 
-export function BreathingGuide({ phase, secondsInPhase, phaseDuration }: Props) {
-  const remaining = Math.max(Math.ceil(phaseDuration - secondsInPhase), 1);
+export function BreathingGuide({ phase, remaining }: Props) {
   return (
     <div className="text-center pointer-events-none">
       <AnimatePresence mode="wait">
@@ -29,7 +29,7 @@ export function BreathingGuide({ phase, secondsInPhase, phaseDuration }: Props) 
           transition={{ duration: 0.3 }}
         >
           <p className="text-xl sm:text-2xl font-medium text-text-primary">
-            {LABEL[phase]}
+            {PHASE_LABEL[phase]}
           </p>
           <p className="mt-1 text-4xl font-light text-accent-breathing tabular-nums">
             {remaining}

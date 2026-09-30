@@ -8,6 +8,7 @@ import { AMBIENT_DESCRIPTION, AMBIENT_LABEL } from '@/lib/audio-presets';
 import {
   ensureAudio,
   onBreathPhase,
+  playPhaseCue,
   setEntrainment,
   setVolume,
   startAmbient,
@@ -38,6 +39,8 @@ export function SoundSection() {
   const presetLabelId = useId();
   // Пресет и громкость относятся к обоим слоям звука.
   const soundOn = settings.ambientEnabled || settings.entrainmentEnabled;
+  // Громкость действует и на сигнал смены фазы.
+  const volumeOn = soundOn || settings.phaseSoundEnabled;
 
   // Превью не выходит за экран настроек: глушится при уходе и при сворачивании.
   useEffect(() => {
@@ -61,6 +64,14 @@ export function SoundSection() {
     void applyPreview({ ...settings, ...patch });
   };
 
+  const changePhaseSound = (enabled: boolean) => {
+    update({ phaseSoundEnabled: enabled });
+    if (!enabled) return;
+    void ensureAudio(settings.ambientPreset, settings.ambientVolume).then((ready) => {
+      if (ready) playPhaseCue('inhale', 2);
+    });
+  };
+
   return (
     <SettingsSection title="Звук и ambient">
       <SwitchRow
@@ -74,6 +85,12 @@ export function SoundSection() {
         help="Громкость звука мягко пульсирует на частоте, подобранной под практику (фокус, спокойствие, сон), помогая мозгу настроиться. Работает через динамики, в наушниках чуть заметнее."
         checked={settings.entrainmentEnabled}
         onChange={(v) => changeSound({ entrainmentEnabled: v })}
+      />
+      <SwitchRow
+        label="Звук смены фазы"
+        help="Короткий тон на каждой фазе дыхания и на смене этапа — для практики с закрытыми глазами. С ambient звучит всегда."
+        checked={settings.phaseSoundEnabled}
+        onChange={changePhaseSound}
       />
       <div role="group" aria-labelledby={presetLabelId}>
         <div id={presetLabelId} className="mb-2 text-sm">
@@ -104,7 +121,7 @@ export function SoundSection() {
           max={1}
           step={0.05}
           value={settings.ambientVolume}
-          disabled={!soundOn}
+          disabled={!volumeOn}
           onChange={(e) => {
             const volume = parseFloat(e.target.value);
             update({ ambientVolume: volume });

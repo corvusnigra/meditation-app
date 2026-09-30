@@ -9,7 +9,9 @@ export type HapticPattern =
   | 'success'
   | 'transition'
   | 'tense'
-  | 'release';
+  | 'release'
+  | 'count'
+  | 'soft';
 
 const PATTERNS: Record<HapticPattern, number | number[]> = {
   tap: 10,
@@ -18,6 +20,8 @@ const PATTERNS: Record<HapticPattern, number | number[]> = {
   transition: [10, 30, 10],
   tense: [300],
   release: [60, 50, 60],
+  count: 30,
+  soft: [40, 120, 40],
 };
 
 // Вибро-гид: различимые на ощупь сигнатуры фаз дыхания —
@@ -30,6 +34,18 @@ const PHASE_PATTERNS: Record<BreathingPhase, number[]> = {
   exhale: [250, 110, 250],
   holdOut: [90],
 };
+
+export function vibratePattern(pattern: HapticPattern): void {
+  vibrateRaw(PATTERNS[pattern]);
+}
+
+export function vibratePhase(phase: BreathingPhase): void {
+  vibrateRaw(PHASE_PATTERNS[phase]);
+}
+
+export function stopVibration(): void {
+  vibrateRaw(0);
+}
 
 function vibrateRaw(pattern: number | number[]): void {
   if (typeof navigator === 'undefined') return;

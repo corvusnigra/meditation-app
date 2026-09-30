@@ -146,6 +146,7 @@ function RunningBox({
     active,
     entrainment: settings.entrainmentEnabled,
     entrainmentHz: entrainmentHzForCategory(technique.category),
+    phaseSound: settings.phaseSoundEnabled,
   });
 
   const { phase, secondsInPhase } = useBreathingCycle({
@@ -157,10 +158,11 @@ function RunningBox({
     },
   });
 
+  const tone = settings.ambientEnabled || settings.phaseSoundEnabled;
   useEffect(() => {
-    if (settings.ambientEnabled) audio.onPhase('inhale', pattern[0]);
+    if (tone) audio.onPhase('inhale', pattern[0]);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [settings.ambientEnabled]);
+  }, [tone]);
 
   const phaseDuration =
     pattern[
@@ -230,8 +232,7 @@ function RunningBox({
         {phaseDuration > 0 ? (
           <BreathingGuide
             phase={phase}
-            secondsInPhase={secondsInPhase}
-            phaseDuration={phaseDuration}
+            remaining={Math.max(Math.ceil(phaseDuration - secondsInPhase), 1)}
           />
         ) : (
           <div className="text-center">

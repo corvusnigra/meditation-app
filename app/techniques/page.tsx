@@ -30,7 +30,11 @@ export default function TechniquesPage() {
 
   // Звук разблокируется жестом — нажатием на карточку, до перехода к технике.
   const unlockAudio = () => {
-    if (settings.ambientEnabled || settings.entrainmentEnabled) {
+    if (
+      settings.ambientEnabled ||
+      settings.entrainmentEnabled ||
+      settings.phaseSoundEnabled
+    ) {
       void ensureAudio(settings.ambientPreset, settings.ambientVolume);
     }
   };

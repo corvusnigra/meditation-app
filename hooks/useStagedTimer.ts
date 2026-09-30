@@ -1,6 +1,8 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo } from 'react';
+import type { PhaseDef } from '@/lib/practice';
+import { useActiveClock, usePhaseCycle, useSecondsInPhase } from './usePhaseCycle';
 
 type Options = {
   durations: number[];
@@ -14,112 +16,42 @@ type Result = {
   secondsInStage: number;
   stageDuration: number;
   totalProgress: number;
-  goNext: () => void;
 };
 
-const TICK_MS = 200;
-
-// Линейная последовательность этапов с авто-переходом.
-// Используется PMR (напряжение/расслабление × группы) и Body Scan (области тела).
+// Линейная последовательность этапов с авто-переходом (PMR: напряжение и
+// расслабление по группам). Обёртка над usePhaseCycle с прежней сигнатурой.
 export function useStagedTimer({
   durations,
   active,
   onStageChange,
   onComplete,
 }: Options): Result {
-  const [index, setIndex] = useState(0);
-  const [secondsInStage, setSecondsInStage] = useState(0);
-
-  const indexRef = useRef(0);
-  const stageStartRef = useRef<number | null>(null);
-  const elapsedBeforePauseRef = useRef(0);
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const completedRef = useRef(false);
-  const durationsRef = useRef(durations);
-  const onStageRef = useRef(onStageChange);
-  const onCompleteRef = useRef(onComplete);
-
-  useEffect(() => {
-    durationsRef.current = durations;
-    onStageRef.current = onStageChange;
-    onCompleteRef.current = onComplete;
-  });
-
-  const totalSec = useMemo(
-    () => durations.reduce((a, b) => a + b, 0),
+  const clock = useActiveClock(active);
+  const phases = useMemo<PhaseDef[]>(
+    () => durations.map((sec, i) => ({ id: String(i), sec })),
     [durations],
   );
+  const totalSec = useMemo(() => durations.reduce((a, b) => a + b, 0), [durations]);
 
-  const advance = () => {
-    const next = indexRef.current + 1;
-    if (next >= durationsRef.current.length) {
-      completedRef.current = true;
-      if (intervalRef.current !== null) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
-      }
-      onCompleteRef.current?.();
-      return;
-    }
-    indexRef.current = next;
-    setIndex(next);
-    onStageRef.current?.(next);
-    elapsedBeforePauseRef.current = 0;
-    stageStartRef.current = performance.now();
-    setSecondsInStage(0);
-  };
+  const cycle = usePhaseCycle({
+    phases,
+    cycles: 1,
+    clock,
+    enabled: true,
+    onPhase: (_phase, _sec, info) => {
+      if (info.first || info.resumed) return;
+      onStageChange?.(info.index);
+    },
+    onComplete,
+  });
 
-  useEffect(() => {
-    if (!active || completedRef.current) {
-      if (stageStartRef.current !== null) {
-        const now = performance.now();
-        elapsedBeforePauseRef.current += (now - stageStartRef.current) / 1000;
-        stageStartRef.current = null;
-      }
-      if (intervalRef.current !== null) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
-      }
-      return;
-    }
-
-    stageStartRef.current = performance.now();
-
-    const tick = () => {
-      if (stageStartRef.current === null) return;
-      const now = performance.now();
-      const inStage =
-        elapsedBeforePauseRef.current + (now - stageStartRef.current) / 1000;
-      const dur = durationsRef.current[indexRef.current] ?? 0;
-      if (dur > 0 && inStage >= dur) {
-        advance();
-      } else {
-        setSecondsInStage(inStage);
-      }
-    };
-
-    tick();
-    intervalRef.current = setInterval(tick, TICK_MS);
-
-    return () => {
-      if (intervalRef.current !== null) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
-      }
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [active]);
-
-  const stageDuration = durations[index] ?? 0;
-  const elapsedTotal =
-    durations.slice(0, index).reduce((a, b) => a + b, 0) + secondsInStage;
-  const totalProgress = totalSec > 0 ? Math.min(elapsedTotal / totalSec, 1) : 0;
+  const secondsInStage = useSecondsInPhase(clock, cycle.phaseStartSec);
+  const elapsed = cycle.completed ? totalSec : cycle.phaseStartSec + secondsInStage;
 
   return {
-    index,
+    index: cycle.index,
     secondsInStage,
-    stageDuration,
-    totalProgress,
-    goNext: advance,
+    stageDuration: cycle.phaseSec,
+    totalProgress: totalSec > 0 ? Math.min(elapsed / totalSec, 1) : 0,
   };
 }

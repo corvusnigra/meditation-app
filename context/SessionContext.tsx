@@ -9,6 +9,7 @@ import {
   type ReactNode,
 } from 'react';
 import type {
+  PhaseId,
   Scenario,
   SessionState,
   SessionStatus,
@@ -17,17 +18,19 @@ import type {
 const INITIAL: SessionState = {
   status: 'idle',
   scenario: 'custom',
-  isPaused: false,
   groundingSense: 0,
   gratitudeText: '',
   startedAt: null,
+  completedPhases: [],
+  activeMs: 0,
 };
+
+// Итог пройденной фазы: засчитана ли она и сколько длилась без пауз.
+export type PhaseReport = { phase: PhaseId; counted: boolean; activeMs: number };
 
 type Action =
   | { type: 'start'; scenario: Scenario }
-  | { type: 'advance'; status: SessionStatus }
-  | { type: 'pause' }
-  | { type: 'resume' }
+  | { type: 'advance'; status: SessionStatus; report?: PhaseReport }
   | { type: 'set-gratitude'; text: string }
   | { type: 'set-grounding-sense'; index: number }
   | { type: 'reset' };
@@ -41,12 +44,20 @@ function reducer(state: SessionState, action: Action): SessionState {
         scenario: action.scenario,
         startedAt: new Date().toISOString(),
       };
-    case 'advance':
-      return { ...state, status: action.status, isPaused: false };
-    case 'pause':
-      return { ...state, isPaused: true };
-    case 'resume':
-      return { ...state, isPaused: false };
+    case 'advance': {
+      const { report } = action;
+      if (!report) return { ...state, status: action.status };
+      const counted =
+        report.counted && !state.completedPhases.includes(report.phase);
+      return {
+        ...state,
+        status: action.status,
+        completedPhases: counted
+          ? [...state.completedPhases, report.phase]
+          : state.completedPhases,
+        activeMs: state.activeMs + Math.max(report.activeMs, 0),
+      };
+    }
     case 'set-gratitude':
       return { ...state, gratitudeText: action.text };
     case 'set-grounding-sense':
@@ -61,9 +72,7 @@ function reducer(state: SessionState, action: Action): SessionState {
 type SessionContextValue = {
   state: SessionState;
   start: (scenario: Scenario) => void;
-  advance: (status: SessionStatus) => void;
-  pause: () => void;
-  resume: () => void;
+  advance: (status: SessionStatus, report?: PhaseReport) => void;
   reset: () => void;
   setGratitude: (text: string) => void;
   setGroundingSense: (index: number) => void;
@@ -79,11 +88,10 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     [],
   );
   const advance = useCallback(
-    (status: SessionStatus) => dispatch({ type: 'advance', status }),
+    (status: SessionStatus, report?: PhaseReport) =>
+      dispatch({ type: 'advance', status, report }),
     [],
   );
-  const pause = useCallback(() => dispatch({ type: 'pause' }), []);
-  const resume = useCallback(() => dispatch({ type: 'resume' }), []);
   const reset = useCallback(() => dispatch({ type: 'reset' }), []);
   const setGratitude = useCallback(
     (text: string) => dispatch({ type: 'set-gratitude', text }),
@@ -99,8 +107,6 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       state,
       start,
       advance,
-      pause,
-      resume,
       reset,
       setGratitude,
       setGroundingSense,
@@ -109,8 +115,6 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       state,
       start,
       advance,
-      pause,
-      resume,
       reset,
       setGratitude,
       setGroundingSense,

@@ -118,6 +118,13 @@ body {
   transition-duration: 0.01ms !important;
 }
 
+/* Зарегистрированное свойство-цвет можно плавно менять переходом. */
+@property --phase-color {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: theme('colors.accent.breathing');
+}
+
 .ambient-bg {
   background: radial-gradient(
       ellipse at center,
@@ -130,7 +137,7 @@ body {
       transparent 70%
     ),
     theme('colors.bg.primary');
-  transition: background 1.2s ease;
+  transition: --phase-color 1.2s ease;
 }
 
 /* Ползунок: поле высотой 44 px под палец, дорожка — 6 px. */

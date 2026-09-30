@@ -79,7 +79,9 @@ export function SighSession({ technique }: Props) {
     active: started && !completed,
     entrainment: settings.entrainmentEnabled,
     entrainmentHz: entrainmentHzForCategory(technique.category),
+    phaseSound: settings.phaseSoundEnabled,
   });
+  const tone = settings.ambientEnabled || settings.phaseSoundEnabled;
 
   const handleComplete = () => {
     if (completed) return;
@@ -151,12 +153,12 @@ export function SighSession({ technique }: Props) {
             size="lg"
             haptic="success"
             onClick={async () => {
-              if (settings.ambientEnabled || settings.entrainmentEnabled) {
+              if (tone || settings.entrainmentEnabled) {
                 await ensureAudio(settings.ambientPreset, settings.ambientVolume);
               }
               startedAtRef.current = Date.now();
               setStarted(true);
-              if (settings.ambientEnabled) {
+              if (tone) {
                 audio.onPhase('inhale', SIGH_DURATION.inhale1);
               }
             }}

@@ -24,6 +24,19 @@ let graph: Graph | null = null;
 let currentPreset: AmbientPreset = 'ocean';
 let currentVolume = 0.5;
 let noiseBuffer: AudioBuffer | null = null;
+// Сигналы фаз идут мимо графа фона: они звучат и без ambient,
+// и когда setActive(false) глушит master.
+let cueBus: GainNode | null = null;
+
+function getCueBus(audioCtx: AudioContext): GainNode {
+  if (!cueBus) {
+    cueBus = audioCtx.createGain();
+    cueBus.connect(audioCtx.destination);
+  }
+  // С фоном сигнал держит прежний баланс с ним, без фона звучит в полную силу.
+  cueBus.gain.value = graph ? currentVolume * 0.7 : 0.7;
+  return cueBus;
+}
 
 function getNoiseBuffer(audioCtx: AudioContext): AudioBuffer {
   if (noiseBuffer) return noiseBuffer;
@@ -169,7 +182,8 @@ export async function ensureAudio(preset: AmbientPreset, volume: number): Promis
   if (!audioCtx) return false;
   currentPreset = preset;
   currentVolume = volume;
-  if (audioCtx.state === 'suspended') {
+  // Не только suspended: после звонка Safari оставляет контекст в interrupted.
+  if (audioCtx.state !== 'running') {
     try {
       await audioCtx.resume();
     } catch {
@@ -190,6 +204,7 @@ export function startAmbient(preset: AmbientPreset, volume: number) {
 }
 
 export function stopAmbient() {
+  stopActiveCue();
   if (!ctx || !graph) return;
   disposeGraph(ctx, graph);
   graph = null;
@@ -246,11 +261,25 @@ type ActiveCue = {
 };
 let activeCue: ActiveCue | null = null;
 
-function stopActiveCue() {
+// hard — без затухания: перед остановкой контекста плавный спад замёрз бы
+// и доиграл после возврата.
+function stopActiveCue(hard = false) {
   if (!ctx || !activeCue) return;
   const now = ctx.currentTime;
   const { nodes, gain } = activeCue;
   try {
+    if (hard) {
+      gain.disconnect();
+      nodes.forEach((n) => {
+        try {
+          n.stop(now);
+        } catch {
+          // already stopped
+        }
+      });
+      activeCue = null;
+      return;
+    }
     gain.gain.cancelScheduledValues(now);
     gain.gain.setValueAtTime(gain.gain.value, now);
     gain.gain.linearRampToValueAtTime(0, now + 0.15);
@@ -267,7 +296,13 @@ function stopActiveCue() {
   activeCue = null;
 }
 
+// Фон в ритме дыхания и сигнал фазы. Без графа фона остаётся только сигнал.
 export function onBreathPhase(phase: BreathingPhase, durationSec = 4) {
+  rampAmbient(phase, durationSec);
+  playPhaseCue(phase, durationSec);
+}
+
+function rampAmbient(phase: BreathingPhase, durationSec: number) {
   if (!ctx || !graph) return;
   const cfg = AMBIENT_PRESETS[currentPreset];
   const now = ctx.currentTime;
@@ -310,14 +345,15 @@ export function onBreathPhase(phase: BreathingPhase, durationSec = 4) {
     now,
     end,
   );
-
-  playCue(phase, vol, durationSec);
 }
 
-function playCue(phase: BreathingPhase, vol: number, durationSec: number) {
-  if (!ctx || !graph) return;
+export function playPhaseCue(phase: BreathingPhase, durationSec = 4) {
+  // В остановленном контексте тоны не планируются: после возврата они бы
+  // прозвучали разом.
+  if (!ctx || ctx.state !== 'running') return;
   const audioCtx = ctx;
-  const out = graph.master;
+  const out = getCueBus(audioCtx);
+  const vol = currentVolume;
   const cfg = AMBIENT_PRESETS[currentPreset];
   const now = audioCtx.currentTime;
   const base = cfg.cueFreq;
@@ -391,5 +427,61 @@ function playCue(phase: BreathingPhase, vol: number, durationSec: number) {
     }
   } catch {
     // ignore
+  }
+}
+
+export type SignalKind = 'count' | 'step' | 'soft' | 'done';
+
+// Ноты сигнала: [множитель частоты, задержка, длительность, громкость].
+const SIGNAL_NOTES: Record<SignalKind, Array<[number, number, number, number]>> = {
+  count: [[2, 0, 0.14, 0.2]],
+  step: [
+    [1.5, 0, 0.35, 0.2],
+    [2, 0.16, 0.5, 0.2],
+  ],
+  soft: [[1, 0, 0.9, 0.16]],
+  done: [
+    [1, 0, 0.4, 0.2],
+    [1.5, 0.18, 0.4, 0.2],
+    [2, 0.36, 0.8, 0.2],
+  ],
+};
+
+// Короткие сигналы вне дыхательных фаз: отсчёт, смена этапа, конец практики.
+export function playSignal(kind: SignalKind) {
+  if (!ctx || ctx.state !== 'running') return;
+  const audioCtx = ctx;
+  const out = getCueBus(audioCtx);
+  const base = AMBIENT_PRESETS[currentPreset].cueFreq;
+  const now = audioCtx.currentTime;
+  try {
+    SIGNAL_NOTES[kind].forEach(([mul, delay, duration, level]) => {
+      const osc = audioCtx.createOscillator();
+      osc.type = 'sine';
+      osc.frequency.value = base * mul;
+      const g = audioCtx.createGain();
+      const start = now + delay;
+      g.gain.setValueAtTime(0, start);
+      g.gain.linearRampToValueAtTime(currentVolume * level, start + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, start + duration);
+      osc.connect(g).connect(out);
+      osc.start(start);
+      osc.stop(start + duration + 0.05);
+    });
+  } catch {
+    // ignore
+  }
+}
+
+export function stopCues() {
+  stopActiveCue();
+}
+
+// Сворачивание приложения: звук замирает до ensureAudio().
+export function suspendAudio() {
+  if (!ctx) return;
+  stopActiveCue(true);
+  if (ctx.state === 'running') {
+    ctx.suspend().catch(() => {});
   }
 }

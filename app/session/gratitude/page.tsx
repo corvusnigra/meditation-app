@@ -1,56 +1,59 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { PageShell } from '@/components/shared/PageShell';
 import { PhaseProgressBar } from '@/components/shared/PhaseProgressBar';
 import { PauseOverlay } from '@/components/shared/PauseOverlay';
+import { Countdown } from '@/components/shared/Countdown';
 import { HapticButton } from '@/components/shared/HapticButton';
-import { Timer } from '@/components/shared/Timer';
 import { GratitudePrompt } from '@/components/gratitude/GratitudePrompt';
 import { GratitudeInput } from '@/components/gratitude/GratitudeInput';
+import { PracticeHeader } from '@/components/practice/PracticeHeader';
 import { useSession } from '@/context/SessionContext';
 import { useHistory } from '@/context/HistoryContext';
 import { useProgressionContext } from '@/context/ProgressionContext';
-import { useTimer } from '@/hooks/useTimer';
-import { useWakeLock } from '@/hooks/useWakeLock';
+import { useClockTick } from '@/hooks/usePracticeClock';
+import { usePracticeController } from '@/hooks/usePracticeController';
 import { GRATITUDE_PLACEHOLDER, GRATITUDE_PROMPTS } from '@/lib/constants';
 import { randomId } from '@/lib/utils';
 
 export default function GratitudePage() {
   const router = useRouter();
-  const { state, advance, pause, resume, setGratitude, reset } = useSession();
+  const { state, advance, setGratitude, reset } = useSession();
   const { add } = useHistory();
   const { state: progression, durations } = useProgressionContext();
-  const [showPause, setShowPause] = useState(false);
+  const practice = usePracticeController();
+  const { clock } = practice;
   const [showField, setShowField] = useState(false);
   const [reachedMinimum, setReachedMinimum] = useState(false);
+  const reachedRef = useRef(false);
+  const closedRef = useRef(false);
 
-  useWakeLock(true);
-
+  // Время здесь — минимум, а не предел: сессию завершает кнопка «Готово».
   const totalSec = durations.gratitude;
 
-  // Таймер только для прогресса минимума — не завершает сессию.
-  const timer = useTimer({
-    durationSec: totalSec,
-    autoStart: true,
-    onComplete: () => setReachedMinimum(true),
+  useClockTick(clock, () => {
+    if (reachedRef.current || clock.now() / 1000 < totalSec) return;
+    reachedRef.current = true;
+    setReachedMinimum(true);
   });
 
   const handleFinish = () => {
-    const startMs = state.startedAt ? new Date(state.startedAt).getTime() : Date.now();
+    if (closedRef.current) return;
+    closedRef.current = true;
     add({
       id: randomId(),
       date: new Date().toISOString(),
       scenario: state.scenario,
       gratitudeText: state.gratitudeText.trim(),
-      durationMs: Math.max(Date.now() - startMs, 0),
-      completedPhases: ['breathing', 'grounding', 'gratitude'],
+      durationMs: Math.round(state.activeMs + clock.now()),
+      completedPhases: [...state.completedPhases, 'gratitude'],
       level: progression.currentLevel,
     });
     advance('complete');
-    router.push('/complete');
+    practice.leave(() => router.replace('/complete'));
   };
 
   useEffect(() => {
@@ -59,43 +62,37 @@ export default function GratitudePage() {
     }
   }, [state.status, router]);
 
-  const handlePauseToggle = () => {
-    if (showPause) {
-      setShowPause(false);
-      timer.resume();
-      resume();
-    } else {
-      setShowPause(true);
-      timer.pause();
-      pause();
-    }
-  };
-
   const handleExit = () => {
-    setShowPause(false);
-    reset();
-    router.push('/');
+    if (closedRef.current) return;
+    closedRef.current = true;
+    practice.leave(() => {
+      reset();
+      router.replace('/');
+    });
   };
-
-  const progressForRing = reachedMinimum ? 1 : timer.progress;
 
   return (
     <PageShell>
       <div className="space-y-4">
-        <PhaseProgressBar
-          currentPhase="gratitude"
-          phaseProgress={progressForRing}
+        <PracticeHeader
+          title={reachedMinimum ? 'Минимум пройден' : 'До минимума'}
+          counter={
+            reachedMinimum ? (
+              <span className="text-xs text-accent-gratitude">
+                можно записать или закончить
+              </span>
+            ) : (
+              <Countdown
+                clock={clock}
+                endSec={totalSec}
+                format="clock"
+                className="font-mono tabular-nums"
+              />
+            )
+          }
+          onClose={() => practice.pause('user')}
         />
-        <div className="flex items-center justify-between text-xs text-text-secondary">
-          <span className="uppercase tracking-wider">
-            {reachedMinimum ? 'Минимум пройден' : 'До минимума'}
-          </span>
-          {reachedMinimum ? (
-            <span className="text-accent-gratitude">можно записать или закончить</span>
-          ) : (
-            <Timer remainingSec={Math.ceil(timer.remaining)} />
-          )}
-        </div>
+        <PhaseProgressBar currentPhase="gratitude" clock={clock} totalSec={totalSec} />
       </div>
 
       <motion.div
@@ -111,7 +108,8 @@ export default function GratitudePage() {
             value={state.gratitudeText}
             onChange={setGratitude}
             placeholder={GRATITUDE_PLACEHOLDER[state.scenario]}
-            progress={progressForRing}
+            clock={clock}
+            totalSec={totalSec}
           />
         ) : (
           <HapticButton
@@ -125,7 +123,7 @@ export default function GratitudePage() {
       </motion.div>
 
       <div className="flex justify-center gap-3 pb-6">
-        <HapticButton variant="ghost" size="md" onClick={handlePauseToggle}>
+        <HapticButton variant="ghost" size="md" onClick={() => practice.pause('user')}>
           Пауза
         </HapticButton>
         <HapticButton
@@ -139,9 +137,9 @@ export default function GratitudePage() {
       </div>
 
       <PauseOverlay
-        visible={showPause}
-        onResume={handlePauseToggle}
-        onSkip={handleFinish}
+        visible={practice.paused}
+        reason={practice.reason}
+        onResume={practice.resume}
         onExit={handleExit}
       />
     </PageShell>

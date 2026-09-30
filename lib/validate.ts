@@ -121,6 +121,7 @@ export function normalizeSettings(raw: unknown): UserSettings {
       : d.ambientVolume,
     hapticsEnabled: bool(raw.hapticsEnabled, d.hapticsEnabled),
     hapticGuideEnabled: bool(raw.hapticGuideEnabled, d.hapticGuideEnabled),
+    phaseSoundEnabled: bool(raw.phaseSoundEnabled, d.phaseSoundEnabled),
     entrainmentEnabled: bool(raw.entrainmentEnabled, d.entrainmentEnabled),
     breathingPattern: isBreathingPattern(raw.breathingPattern)
       ? raw.breathingPattern

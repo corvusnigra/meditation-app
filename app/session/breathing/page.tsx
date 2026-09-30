@@ -1,101 +1,87 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { motion } from 'framer-motion';
 import { PageShell } from '@/components/shared/PageShell';
 import { PhaseProgressBar } from '@/components/shared/PhaseProgressBar';
 import { PauseOverlay } from '@/components/shared/PauseOverlay';
-import { BreathingCircle } from '@/components/breathing/BreathingCircle';
-import { BreathingGuide } from '@/components/breathing/BreathingGuide';
-import { BreathingTimer } from '@/components/breathing/BreathingTimer';
-import { AmbientVisualizer } from '@/components/breathing/AmbientVisualizer';
+import { Countdown } from '@/components/shared/Countdown';
 import { HapticButton } from '@/components/shared/HapticButton';
+import { BreathingGuide, PHASE_LABEL } from '@/components/breathing/BreathingGuide';
+import { AmbientVisualizer } from '@/components/breathing/AmbientVisualizer';
+import { PracticeHeader } from '@/components/practice/PracticeHeader';
+import { PracticeCircle, CIRCLE_REST_SCALE } from '@/components/practice/PracticeCircle';
+import { StartCountdown } from '@/components/practice/StartCountdown';
+import { SignalToggle } from '@/components/practice/SignalToggle';
+import { PhaseAnnouncer } from '@/components/practice/PhaseAnnouncer';
 import { useSession } from '@/context/SessionContext';
 import { useSettings } from '@/context/SettingsContext';
 import { useProgressionContext } from '@/context/ProgressionContext';
-import { useBreathingCycle } from '@/hooks/useBreathingCycle';
 import { useBreathingAudio } from '@/hooks/useBreathingAudio';
-import { useTimer } from '@/hooks/useTimer';
-import { usePhaseHaptics } from '@/hooks/useHaptics';
-import { useWakeLock } from '@/hooks/useWakeLock';
+import { usePhaseCycle } from '@/hooks/usePhaseCycle';
+import { usePracticeController } from '@/hooks/usePracticeController';
 import { RITUAL_ENTRAINMENT_HZ } from '@/lib/entrainment';
+import { breathingPhases, phaseCounted, ritualCycles } from '@/lib/practice';
 import type { BreathingPhase } from '@/lib/types';
+import { formatTime } from '@/lib/utils';
 
-const PHASE_ORDER: BreathingPhase[] = ['inhale', 'holdIn', 'exhale', 'holdOut'];
+const SCALE: Record<BreathingPhase, number> = {
+  inhale: 1,
+  holdIn: 1,
+  exhale: CIRCLE_REST_SCALE,
+  holdOut: CIRCLE_REST_SCALE,
+};
 
 export default function BreathingPage() {
   const router = useRouter();
-  const { state, advance, pause, resume } = useSession();
+  const { state, advance, reset } = useSession();
   const { settings, reducedMotion } = useSettings();
   const { durations } = useProgressionContext();
-  const [showPause, setShowPause] = useState(false);
-  const phaseHaptics = usePhaseHaptics(
-    settings.hapticGuideEnabled,
-    settings.hapticsEnabled,
-  );
-
-  // Плановое время округляется вверх до целого цикла, чтобы дыхание
-  // не обрывалось посреди задержки.
-  const cycleSec = settings.breathingPattern.reduce((a, b) => a + b, 0);
-  const plannedCycles = Math.ceil(durations.breathing / cycleSec);
-  const totalSec = plannedCycles * cycleSec;
-  const active = !showPause;
-
-  // Фазу завершает цикл дыхания (или «Пропустить»), а не таймер: у них разные
-  // часы, и только так переход попадает ровно на границу цикла.
+  const practice = usePracticeController();
+  const { clock, signals } = practice;
+  const [stage, setStage] = useState<'countdown' | 'running'>('countdown');
   const closedRef = useRef(false);
-  const phaseIndexRef = useRef(0);
-  const cyclesDoneRef = useRef(0);
 
-  const goToGrounding = () => {
-    if (closedRef.current) return;
-    closedRef.current = true;
-    advance('grounding');
-    router.push('/session/grounding');
-  };
+  const pattern = settings.breathingPattern;
+  const phases = useMemo(() => breathingPhases(pattern), [pattern]);
+  const cycleSec = pattern.reduce((a, b) => a + b, 0);
+  const cycles = ritualCycles(durations.breathing, pattern);
+  const totalSec = cycles * cycleSec;
+  const running = stage === 'running';
 
-  useWakeLock(true);
-
-  // Таймер только показывает оставшееся время.
-  const timer = useTimer({ durationSec: totalSec, autoStart: true });
-
-  const audio = useBreathingAudio({
+  // Фон ведёт этот хук, сигналы фаз — practice.signals.
+  useBreathingAudio({
     enabled: settings.ambientEnabled,
     preset: settings.ambientPreset,
     volume: settings.ambientVolume,
-    active,
+    active: running && !practice.paused,
     entrainment: settings.entrainmentEnabled,
     entrainmentHz: RITUAL_ENTRAINMENT_HZ,
   });
 
-  const { phase, secondsInPhase, phaseProgress } = useBreathingCycle({
-    pattern: settings.breathingPattern,
-    active,
-    onPhaseChange: (newPhase, dur) => {
-      if (closedRef.current) return;
-      const index = PHASE_ORDER.indexOf(newPhase);
-      const cycleEnded = index <= phaseIndexRef.current;
-      phaseIndexRef.current = index;
-      if (cycleEnded) {
-        cyclesDoneRef.current += 1;
-        if (cyclesDoneRef.current >= plannedCycles) {
-          // Последний цикл закончен: уходим без сигнала нового вдоха.
-          goToGrounding();
-          return;
-        }
-      }
-      phaseHaptics(newPhase);
-      audio.onPhase(newPhase, dur);
+  const cycle = usePhaseCycle({
+    phases,
+    cycles,
+    clock,
+    enabled: running,
+    onPhase: (phase, sec, info) => {
+      if (!closedRef.current) signals.phase(phase, sec, info.resumed);
     },
+    onComplete: () => goToGrounding(cycles),
   });
 
-  useEffect(() => {
-    if (settings.ambientEnabled) {
-      audio.onPhase('inhale', settings.breathingPattern[0]);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [settings.ambientEnabled]);
+  const goToGrounding = (cyclesDone: number) => {
+    if (closedRef.current) return;
+    closedRef.current = true;
+    signals.silence();
+    signals.stage('step');
+    advance('grounding', {
+      phase: 'breathing',
+      counted: phaseCounted(cyclesDone, cycles),
+      activeMs: running ? clock.now() : 0,
+    });
+    practice.leave(() => router.replace('/session/grounding'));
+  };
 
   useEffect(() => {
     if (state.status === 'idle') {
@@ -103,68 +89,87 @@ export default function BreathingPage() {
     }
   }, [state.status, router]);
 
-  const handlePauseToggle = () => {
-    if (showPause) {
-      setShowPause(false);
-      timer.resume();
-      resume();
-    } else {
-      setShowPause(true);
-      timer.pause();
-      pause();
-    }
+  const handleStart = () => {
+    void signals.unlock();
+    clock.restart();
+    setStage('running');
   };
 
+  // unlock в жесте: после сворачивания звук спит, пока его не разбудит касание.
   const handleSkip = () => {
-    setShowPause(false);
-    goToGrounding();
+    void signals.unlock();
+    goToGrounding(running ? cycle.cycleIndex : 0);
   };
 
   const handleExit = () => {
-    // Снятая пауза снова запускает цикл — он не должен увести на заземление.
+    if (closedRef.current) return;
     closedRef.current = true;
-    setShowPause(false);
-    router.push('/');
+    practice.leave(() => {
+      reset();
+      router.replace('/');
+    });
   };
-
-  const phaseDuration =
-    settings.breathingPattern[
-      phase === 'inhale' ? 0 : phase === 'holdIn' ? 1 : phase === 'exhale' ? 2 : 3
-    ];
 
   return (
     <PageShell>
       <div className="space-y-4">
-        <PhaseProgressBar currentPhase="breathing" phaseProgress={timer.progress} />
-        <BreathingTimer
-          remainingSec={Math.ceil(timer.remaining)}
-          totalSec={totalSec}
-          label={`Дыхание по квадрату ${settings.breathingPattern.join('–')}`}
+        <PracticeHeader
+          title={`Дыхание ${pattern.join('–')}`}
+          counter={
+            <span className="font-mono tabular-nums">
+              {running ? (
+                <Countdown clock={clock} endSec={totalSec} format="clock" />
+              ) : (
+                formatTime(totalSec)
+              )}
+            </span>
+          }
+          onClose={() => practice.pause('user')}
+        />
+        <PhaseProgressBar
+          currentPhase="breathing"
+          clock={clock}
+          totalSec={running ? totalSec : null}
         />
       </div>
 
-      <motion.div
-        className="flex-1 flex flex-col items-center justify-center gap-10"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.6 }}
-      >
-        <BreathingCircle
-          phase={phase}
-          pattern={settings.breathingPattern}
-          active={active}
-          reducedMotion={reducedMotion}
+      <div className="relative flex-1 flex flex-col items-center justify-center gap-10">
+        <PracticeCircle
+          scale={running ? SCALE[cycle.phase] : CIRCLE_REST_SCALE}
+          durationSec={
+            running && (cycle.phase === 'inhale' || cycle.phase === 'exhale')
+              ? cycle.phaseSec
+              : 0.1
+          }
+          still={reducedMotion}
+          paused={practice.paused}
+          phase={running ? cycle.phase : undefined}
         />
-        <BreathingGuide
-          phase={phase}
-          secondsInPhase={secondsInPhase}
-          phaseDuration={phaseDuration}
-        />
-        <AmbientVisualizer phase={phase} enabled={settings.ambientEnabled} />
-      </motion.div>
+        {running ? (
+          <>
+            <BreathingGuide
+              phase={cycle.phase}
+              remaining={
+                <Countdown
+                  clock={clock}
+                  endSec={cycle.phaseStartSec + cycle.phaseSec}
+                  min={1}
+                />
+              }
+            />
+            <AmbientVisualizer phase={cycle.phase} enabled={settings.ambientEnabled} />
+          </>
+        ) : (
+          <StartCountdown
+            clock={clock}
+            onCount={() => signals.stage('count')}
+            onDone={handleStart}
+          />
+        )}
+      </div>
 
       <div className="flex justify-center gap-3 pb-6">
-        <HapticButton variant="ghost" size="md" onClick={handlePauseToggle}>
+        <HapticButton variant="ghost" size="md" onClick={() => practice.pause('user')}>
           Пауза
         </HapticButton>
         <HapticButton variant="subtle" size="md" onClick={handleSkip}>
@@ -173,11 +178,15 @@ export default function BreathingPage() {
       </div>
 
       <PauseOverlay
-        visible={showPause}
-        onResume={handlePauseToggle}
+        visible={practice.paused}
+        reason={practice.reason}
+        onResume={practice.resume}
         onSkip={handleSkip}
         onExit={handleExit}
-      />
+      >
+        <SignalToggle />
+      </PauseOverlay>
+      <PhaseAnnouncer text={running ? PHASE_LABEL[cycle.phase] : 'Приготовьтесь'} />
     </PageShell>
   );
 }

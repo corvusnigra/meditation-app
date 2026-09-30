@@ -21,11 +21,15 @@ export type SessionStatus =
 export type SessionState = {
   status: SessionStatus;
   scenario: Scenario;
-  isPaused: boolean;
   groundingSense: number;
   gratitudeText: string;
   startedAt: string | null;
+  // Засчитанные фазы и активное время уже пройденных фаз ритуала.
+  completedPhases: PhaseId[];
+  activeMs: number;
 };
+
+export type PracticeUnit = 'cycle' | 'round' | 'group';
 
 export type CompletedSession = {
   id: string;
@@ -38,6 +42,10 @@ export type CompletedSession = {
   kind?: 'ritual' | 'technique';
   techniqueId?: BreathingTechniqueId;
   techniqueName?: string;
+  // Сколько единиц практики выполнено из плана.
+  done?: number;
+  planned?: number;
+  unit?: PracticeUnit;
 };
 
 export type TechniqueCategory = 'anxiety' | 'sleep' | 'focus' | 'energy';
@@ -124,6 +132,8 @@ export type UserSettings = {
   ambientVolume: number;
   hapticsEnabled: boolean;
   hapticGuideEnabled: boolean;
+  // Тон на смене фазы без фонового звука.
+  phaseSoundEnabled: boolean;
   entrainmentEnabled: boolean;
   breathingPattern: [number, number, number, number];
   motionPref: MotionPref;

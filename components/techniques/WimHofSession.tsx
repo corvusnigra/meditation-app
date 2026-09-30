@@ -145,7 +145,11 @@ export function WimHofSession({ technique }: Props) {
           haptic="success"
           disabled={!acknowledgedWarning}
           onClick={async () => {
-            if (settings.ambientEnabled || settings.entrainmentEnabled) {
+            if (
+              settings.ambientEnabled ||
+              settings.entrainmentEnabled ||
+              settings.phaseSoundEnabled
+            ) {
               await ensureAudio(settings.ambientPreset, settings.ambientVolume);
             }
             startedAtRef.current = Date.now();
@@ -182,7 +186,9 @@ function RunningSession({
     active: true,
     entrainment: settings.entrainmentEnabled,
     entrainmentHz: entrainmentHzForCategory(technique.category),
+    phaseSound: settings.phaseSoundEnabled,
   });
+  const tone = settings.ambientEnabled || settings.phaseSoundEnabled;
 
   const {
     stage,
@@ -203,10 +209,8 @@ function RunningSession({
       if (s === 'retention') {
         if (settings.ambientEnabled) setActive(false);
       } else if (s === 'recovery') {
-        if (settings.ambientEnabled) {
-          setActive(true);
-          audio.onPhase('holdIn', config.recoveryHoldSec);
-        }
+        if (settings.ambientEnabled) setActive(true);
+        if (tone) audio.onPhase('holdIn', config.recoveryHoldSec);
       } else if (s === 'breathing') {
         if (settings.ambientEnabled) setActive(true);
       }
@@ -214,15 +218,15 @@ function RunningSession({
   });
 
   // Pulse audio in sync with the fast breath rhythm.
-  const lastInhaleRef = useRef(breathInhale);
+  const lastInhaleRef = useRef<boolean | null>(null);
   useEffect(() => {
     if (stage !== 'breathing') return;
-    if (!settings.ambientEnabled) return;
+    if (!tone) return;
     if (lastInhaleRef.current !== breathInhale) {
       lastInhaleRef.current = breathInhale;
       audio.onPhase(breathInhale ? 'inhale' : 'exhale', halfCycle);
     }
-  }, [breathInhale, stage, settings.ambientEnabled, audio, halfCycle]);
+  }, [breathInhale, stage, tone, audio, halfCycle]);
 
   // Force completion handler if completed at mount (safety)
   useEffect(() => {

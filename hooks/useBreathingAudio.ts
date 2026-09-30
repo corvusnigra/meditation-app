@@ -4,11 +4,13 @@ import { useEffect } from 'react';
 import {
   ensureAudio,
   onBreathPhase,
+  playPhaseCue,
   setActive,
   setEntrainment,
   setVolume,
   startAmbient,
   stopAmbient,
+  stopCues,
 } from '@/lib/breathing-audio';
 import type { AmbientPreset, BreathingPhase } from '@/lib/types';
 
@@ -19,6 +21,7 @@ type UseBreathingAudioOptions = {
   active: boolean;
   entrainment?: boolean; // слой амплитудной модуляции
   entrainmentHz?: number;
+  phaseSound?: boolean; // тон смены фазы без ambient
 };
 
 type UseBreathingAudioResult = {
@@ -34,6 +37,7 @@ export function useBreathingAudio({
   active,
   entrainment = false,
   entrainmentHz = 10,
+  phaseSound = false,
 }: UseBreathingAudioOptions): UseBreathingAudioResult {
   // Движок нужен, если включён ambient ИЛИ энтрейнмент.
   const engineOn = enabled || entrainment;
@@ -57,6 +61,13 @@ export function useBreathingAudio({
     if (engineOn) setActive(active);
   }, [engineOn, active]);
 
+  // Сигнал фазы идёт мимо master: на паузе и при уходе его глушим отдельно.
+  useEffect(() => {
+    if (!active) stopCues();
+  }, [active]);
+
+  useEffect(() => stopCues, []);
+
   useEffect(() => {
     if (engineOn) setEntrainment(entrainment, entrainmentHz);
   }, [engineOn, entrainment, entrainmentHz]);
@@ -67,6 +78,7 @@ export function useBreathingAudio({
     },
     onPhase: (phase, durationSec) => {
       if (enabled) onBreathPhase(phase, durationSec);
+      else if (phaseSound) playPhaseCue(phase, durationSec);
     },
     stop: () => {
       stopAmbient();

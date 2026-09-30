@@ -1,15 +1,28 @@
 'use client';
 
+import { useRef } from 'react';
 import { motion } from 'framer-motion';
+import { useClockTick, type PracticeClock } from '@/hooks/usePracticeClock';
 
 type Props = {
   value: string;
   onChange: (v: string) => void;
   placeholder: string;
-  progress: number;
+  // Кольцо вокруг поля заполняется до минимума времени фазы.
+  clock: PracticeClock;
+  totalSec: number;
 };
 
-export function GratitudeInput({ value, onChange, placeholder, progress }: Props) {
+export function GratitudeInput({ value, onChange, placeholder, clock, totalSec }: Props) {
+  const ringRef = useRef<HTMLDivElement>(null);
+
+  useClockTick(clock, () => {
+    const progress = totalSec > 0 ? Math.min(clock.now() / 1000 / totalSec, 1) : 1;
+    if (ringRef.current) {
+      ringRef.current.style.background = `conic-gradient(currentColor ${progress * 360}deg, transparent 0)`;
+    }
+  });
+
   return (
     <motion.div
       initial={{ y: 12, opacity: 0 }}
@@ -18,10 +31,10 @@ export function GratitudeInput({ value, onChange, placeholder, progress }: Props
       className="relative w-full"
     >
       <div
+        ref={ringRef}
         className="absolute inset-0 rounded-2xl pointer-events-none text-accent-gratitude"
         aria-hidden
         style={{
-          background: `conic-gradient(currentColor ${progress * 360}deg, transparent 0)`,
           opacity: 0.25,
           padding: 2,
           WebkitMask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
