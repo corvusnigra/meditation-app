@@ -44,10 +44,6 @@ export default function CompletePage() {
     };
   }, [reset]);
 
-  const handleAccept = () => {
-    if (upgradeOffer) acceptUpgrade(upgradeOffer.nextLvl);
-  };
-
   const handleShare = async () => {
     if (typeof navigator === 'undefined') return;
     if ('share' in navigator) {
@@ -131,7 +127,7 @@ export default function CompletePage() {
           <UpgradeBanner
             nextLevel={upgradeOffer.nextLvl}
             streak={streak}
-            onAccept={handleAccept}
+            onAccept={acceptUpgrade}
             onDecline={declineUpgrade}
           />
         </div>

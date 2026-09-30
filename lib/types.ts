@@ -138,11 +138,19 @@ export type CustomDurations = {
 
 export type ProgressionState = {
   currentLevel: ProgressionLevel;
-  offeredUpgrade: boolean;
-  declinedAt: string | null;
-  lastStreakBeforeBreak: number;
   customDurations: CustomDurations | null;
+  // Когда отказались от перехода на currentLevel + 1.
+  declinedAt: string | null;
+  lastUpgradeAt: string | null;
+  // date ритуала, перерыв после которого уже учтён откатом.
+  rollbackAnchor: string | null;
+  rollbackNotice: { from: ProgressionLevel; to: ProgressionLevel } | null;
 };
+
+export type LevelProgress =
+  | { kind: 'max' }
+  | { kind: 'ready'; next: ProgressionLevel }
+  | { kind: 'wait'; next: ProgressionLevel; daysLeft: number };
 
 export type LevelDurations = {
   breathing: number;

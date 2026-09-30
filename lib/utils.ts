@@ -31,6 +31,12 @@ export function isoDayKey(date: Date | string): string {
   return `${y}-${m}-${day}`;
 }
 
+// Обратное к isoDayKey: полночь этого дня по местному времени.
+export function dayKeyToDate(key: string): Date {
+  const [y, m, d] = key.split('-').map(Number);
+  return new Date(y, m - 1, d);
+}
+
 export function daysBetween(a: Date | string, b: Date | string): number {
   const da = typeof a === 'string' ? new Date(a) : a;
   const db = typeof b === 'string' ? new Date(b) : b;

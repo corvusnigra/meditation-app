@@ -19,6 +19,10 @@ const SCALE: Record<BreathingPhase, number> = {
   holdOut: 0.55,
 };
 
+// Внешнее кольцо на вдохе растёт в 1.45 раза. Базовый размер колец ограничен так,
+// чтобы на пике оно помещалось в ширину экрана с полями по 16px.
+const RING_FIT = 'calc((100vw - 32px) / 1.45)';
+
 export function BreathingCircle({ phase, pattern, active, reducedMotion }: Props) {
   const duration = pattern[
     phase === 'inhale' ? 0 : phase === 'holdIn' ? 1 : phase === 'exhale' ? 2 : 3
@@ -36,22 +40,30 @@ export function BreathingCircle({ phase, pattern, active, reducedMotion }: Props
       <motion.div
         aria-hidden
         className="absolute rounded-full bg-accent-breathing/15"
+        initial={{ scale: reducedMotion ? 0.95 : SCALE.exhale * 1.45 }}
         animate={{
           scale: active && !reducedMotion ? SCALE[phase] * 1.45 : 0.95,
           opacity: active ? 0.6 : 0.3,
         }}
         transition={transition}
-        style={{ width: 280, height: 280 }}
+        style={{
+          width: `min(280px, ${RING_FIT})`,
+          height: `min(280px, ${RING_FIT})`,
+        }}
       />
       <motion.div
         aria-hidden
         className="absolute rounded-full bg-accent-breathing/25"
+        initial={{ scale: reducedMotion ? 0.95 : SCALE.exhale * 1.2 }}
         animate={{
           scale: active && !reducedMotion ? SCALE[phase] * 1.2 : 0.95,
           opacity: active ? 0.8 : 0.4,
         }}
         transition={transition}
-        style={{ width: 240, height: 240 }}
+        style={{
+          width: `min(240px, ${RING_FIT})`,
+          height: `min(240px, ${RING_FIT})`,
+        }}
       />
       <motion.div
         className={cn(
@@ -59,6 +71,7 @@ export function BreathingCircle({ phase, pattern, active, reducedMotion }: Props
           'bg-gradient-to-br from-accent-breathing/80 to-accent-breathing/30',
           'shadow-glow-breathing',
         )}
+        initial={{ scale: reducedMotion ? 0.85 : SCALE.exhale }}
         animate={{
           scale: active && !reducedMotion ? SCALE[phase] : 0.85,
         }}

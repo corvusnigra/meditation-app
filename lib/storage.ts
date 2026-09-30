@@ -4,22 +4,29 @@ import type {
   TechniqueLevels,
   UserSettings,
 } from './types';
-import { DEFAULT_SETTINGS, STORAGE_KEYS } from './constants';
+import { STORAGE_KEYS } from './constants';
+import {
+  normalizeProgression,
+  normalizeSessions,
+  normalizeSettings,
+  normalizeTechniqueLevels,
+} from './validate';
 
 const isBrowser = (): boolean => typeof window !== 'undefined';
 
-function safeParse<T>(raw: string | null, fallback: T): T {
-  if (raw === null) return fallback;
+function safeParse(raw: string | null): unknown {
+  if (raw === null) return null;
   try {
-    return JSON.parse(raw) as T;
+    return JSON.parse(raw);
   } catch {
-    return fallback;
+    return null;
   }
 }
 
-function read<T>(key: string, fallback: T): T {
-  if (!isBrowser()) return fallback;
-  return safeParse(window.localStorage.getItem(key), fallback);
+// Формат прочитанного не гарантирован — к типу его приводят нормализаторы.
+function read(key: string): unknown {
+  if (!isBrowser()) return null;
+  return safeParse(window.localStorage.getItem(key));
 }
 
 function write<T>(key: string, value: T): void {
@@ -38,7 +45,7 @@ function remove(key: string): void {
 
 export const sessionsStorage = {
   load(): CompletedSession[] {
-    return read<CompletedSession[]>(STORAGE_KEYS.sessions, []);
+    return normalizeSessions(read(STORAGE_KEYS.sessions));
   },
   save(sessions: CompletedSession[]): void {
     write(STORAGE_KEYS.sessions, sessions);
@@ -56,8 +63,7 @@ export const sessionsStorage = {
 
 export const settingsStorage = {
   load(): UserSettings {
-    const stored = read<Partial<UserSettings> | null>(STORAGE_KEYS.settings, null);
-    return { ...DEFAULT_SETTINGS, ...(stored ?? {}) };
+    return normalizeSettings(read(STORAGE_KEYS.settings));
   },
   save(settings: UserSettings): void {
     write(STORAGE_KEYS.settings, settings);
@@ -67,18 +73,9 @@ export const settingsStorage = {
   },
 };
 
-const DEFAULT_PROGRESSION: ProgressionState = {
-  currentLevel: 1,
-  offeredUpgrade: false,
-  declinedAt: null,
-  lastStreakBeforeBreak: 0,
-  customDurations: null,
-};
-
 export const progressionStorage = {
   load(): ProgressionState {
-    const stored = read<Partial<ProgressionState> | null>(STORAGE_KEYS.progression, null);
-    return { ...DEFAULT_PROGRESSION, ...(stored ?? {}) };
+    return normalizeProgression(read(STORAGE_KEYS.progression));
   },
   save(state: ProgressionState): void {
     write(STORAGE_KEYS.progression, state);
@@ -90,7 +87,7 @@ export const progressionStorage = {
 
 export const techniqueLevelsStorage = {
   load(): TechniqueLevels {
-    return read<TechniqueLevels>(STORAGE_KEYS.techniqueLevels, {});
+    return normalizeTechniqueLevels(read(STORAGE_KEYS.techniqueLevels));
   },
   save(levels: TechniqueLevels): void {
     write(STORAGE_KEYS.techniqueLevels, levels);

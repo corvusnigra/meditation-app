@@ -1,6 +1,7 @@
 import type {
   LevelDurations,
   ProgressionLevel,
+  ProgressionState,
   Scenario,
   UserSettings,
 } from './types';
@@ -16,11 +17,19 @@ export const STORAGE_KEYS = {
   techniqueLevels: 'mm:techniqueLevels',
 } as const;
 
+const LEVEL_3_DURATIONS: LevelDurations = {
+  breathing: 240,
+  grounding: 210,
+  gratitude: 150,
+  total: 600,
+};
+
 export const LEVEL_DURATIONS: Record<ProgressionLevel, LevelDurations> = {
   1: { breathing: 120, grounding: 120, gratitude: 60, total: 300 },
   2: { breathing: 180, grounding: 150, gratitude: 90, total: 420 },
-  3: { breathing: 240, grounding: 210, gratitude: 150, total: 600 },
-  4: { breathing: 0, grounding: 0, gratitude: 0, total: 0 },
+  3: LEVEL_3_DURATIONS,
+  // Уровень 4 — свой ритм: пока свои длительности не заданы, идут значения уровня 3.
+  4: LEVEL_3_DURATIONS,
 };
 
 export const LEVEL_STREAK_THRESHOLD: Record<ProgressionLevel, number> = {
@@ -35,6 +44,15 @@ export const LEVEL_LABEL: Record<ProgressionLevel, string> = {
   2: 'Привычка',
   3: 'Углубление',
   4: 'Мастерство',
+};
+
+export const DEFAULT_PROGRESSION: ProgressionState = {
+  currentLevel: 1,
+  customDurations: null,
+  declinedAt: null,
+  lastUpgradeAt: null,
+  rollbackAnchor: null,
+  rollbackNotice: null,
 };
 
 export const DEFAULT_BREATHING_PATTERN: [number, number, number, number] = [4, 4, 4, 4];
@@ -152,4 +170,5 @@ export const COMPLETION_QUOTES: string[] = [
 ];
 
 export const DECLINE_GRACE_DAYS = 3;
+export const UPGRADE_COOLDOWN_DAYS = 7;
 export const STREAK_BREAK_GRACE_DAYS = 3;

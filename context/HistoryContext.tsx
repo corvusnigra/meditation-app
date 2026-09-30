@@ -16,12 +16,17 @@ import {
   longestStreak,
   totalDurationMs,
 } from '@/lib/progression';
+import { isoDayKey } from '@/lib/utils';
+import { useDayKey } from '@/hooks/useDayKey';
 
 type HistoryContextValue = {
   sessions: CompletedSession[];
   streak: number;
   longest: number;
   totalMinutes: number;
+  todayKey: string;
+  doneToday: boolean;
+  lastRitual: CompletedSession | null;
   add: (session: CompletedSession) => void;
   clear: () => void;
   hydrated: boolean;
@@ -32,6 +37,7 @@ const HistoryContext = createContext<HistoryContextValue | null>(null);
 export function HistoryProvider({ children }: { children: ReactNode }) {
   const [sessions, setSessions] = useState<CompletedSession[]>([]);
   const [hydrated, setHydrated] = useState(false);
+  const todayKey = useDayKey();
 
   useEffect(() => {
     setSessions(sessionsStorage.load());
@@ -58,8 +64,22 @@ export function HistoryProvider({ children }: { children: ReactNode }) {
     const streak = calculateStreak(rituals);
     const longest = longestStreak(rituals);
     const totalMinutes = Math.round(totalDurationMs(sessions) / 60000);
-    return { sessions, streak, longest, totalMinutes, add, clear, hydrated };
-  }, [sessions, add, clear, hydrated]);
+    const lastRitual = rituals[rituals.length - 1] ?? null;
+    // todayKey в зависимостях ещё и затем, чтобы серия пересчиталась при смене дня.
+    const doneToday = rituals.some((s) => isoDayKey(s.date) === todayKey);
+    return {
+      sessions,
+      streak,
+      longest,
+      totalMinutes,
+      todayKey,
+      doneToday,
+      lastRitual,
+      add,
+      clear,
+      hydrated,
+    };
+  }, [sessions, todayKey, add, clear, hydrated]);
 
   return <HistoryContext.Provider value={value}>{children}</HistoryContext.Provider>;
 }

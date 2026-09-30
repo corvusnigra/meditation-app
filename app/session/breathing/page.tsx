@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { PageShell } from '@/components/shared/PageShell';
@@ -20,6 +20,9 @@ import { useTimer } from '@/hooks/useTimer';
 import { usePhaseHaptics } from '@/hooks/useHaptics';
 import { useWakeLock } from '@/hooks/useWakeLock';
 import { RITUAL_ENTRAINMENT_HZ } from '@/lib/entrainment';
+import type { BreathingPhase } from '@/lib/types';
+
+const PHASE_ORDER: BreathingPhase[] = ['inhale', 'holdIn', 'exhale', 'holdOut'];
 
 export default function BreathingPage() {
   const router = useRouter();
@@ -32,19 +35,30 @@ export default function BreathingPage() {
     settings.hapticsEnabled,
   );
 
-  const totalSec = durations.breathing;
+  // Плановое время округляется вверх до целого цикла, чтобы дыхание
+  // не обрывалось посреди задержки.
+  const cycleSec = settings.breathingPattern.reduce((a, b) => a + b, 0);
+  const plannedCycles = Math.ceil(durations.breathing / cycleSec);
+  const totalSec = plannedCycles * cycleSec;
   const active = !showPause;
+
+  // Фазу завершает цикл дыхания (или «Пропустить»), а не таймер: у них разные
+  // часы, и только так переход попадает ровно на границу цикла.
+  const closedRef = useRef(false);
+  const phaseIndexRef = useRef(0);
+  const cyclesDoneRef = useRef(0);
+
+  const goToGrounding = () => {
+    if (closedRef.current) return;
+    closedRef.current = true;
+    advance('grounding');
+    router.push('/session/grounding');
+  };
 
   useWakeLock(true);
 
-  const timer = useTimer({
-    durationSec: totalSec,
-    autoStart: true,
-    onComplete: () => {
-      advance('grounding');
-      router.push('/session/grounding');
-    },
-  });
+  // Таймер только показывает оставшееся время.
+  const timer = useTimer({ durationSec: totalSec, autoStart: true });
 
   const audio = useBreathingAudio({
     enabled: settings.ambientEnabled,
@@ -59,6 +73,18 @@ export default function BreathingPage() {
     pattern: settings.breathingPattern,
     active,
     onPhaseChange: (newPhase, dur) => {
+      if (closedRef.current) return;
+      const index = PHASE_ORDER.indexOf(newPhase);
+      const cycleEnded = index <= phaseIndexRef.current;
+      phaseIndexRef.current = index;
+      if (cycleEnded) {
+        cyclesDoneRef.current += 1;
+        if (cyclesDoneRef.current >= plannedCycles) {
+          // Последний цикл закончен: уходим без сигнала нового вдоха.
+          goToGrounding();
+          return;
+        }
+      }
       phaseHaptics(newPhase);
       audio.onPhase(newPhase, dur);
     },
@@ -91,10 +117,12 @@ export default function BreathingPage() {
 
   const handleSkip = () => {
     setShowPause(false);
-    timer.finish();
+    goToGrounding();
   };
 
   const handleExit = () => {
+    // Снятая пауза снова запускает цикл — он не должен увести на заземление.
+    closedRef.current = true;
     setShowPause(false);
     router.push('/');
   };

@@ -3,22 +3,17 @@ import {
   LEVEL_DURATIONS,
   LEVEL_STREAK_THRESHOLD,
   STREAK_BREAK_GRACE_DAYS,
+  UPGRADE_COOLDOWN_DAYS,
 } from './constants';
 import type {
   CompletedSession,
   CustomDurations,
   LevelDurations,
+  LevelProgress,
   ProgressionLevel,
   ProgressionState,
 } from './types';
 import { daysBetween, isoDayKey } from './utils';
-
-export function levelFromStreak(streak: number): ProgressionLevel {
-  if (streak >= LEVEL_STREAK_THRESHOLD[4]) return 4;
-  if (streak >= LEVEL_STREAK_THRESHOLD[3]) return 3;
-  if (streak >= LEVEL_STREAK_THRESHOLD[2]) return 2;
-  return 1;
-}
 
 export function previousLevel(level: ProgressionLevel): ProgressionLevel {
   if (level <= 1) return 1;
@@ -40,58 +35,87 @@ export function getDurations(
   return LEVEL_DURATIONS[level];
 }
 
+// Сколько осталось до следующего уровня. Предлагается только соседний уровень:
+// нужна серия, пауза после отказа и пауза после прошлого повышения.
+export function levelProgress(
+  streak: number,
+  state: ProgressionState,
+  now: Date = new Date(),
+): LevelProgress {
+  if (state.currentLevel >= 4) return { kind: 'max' };
+  const next = (state.currentLevel + 1) as ProgressionLevel;
+  const daysLeft = Math.max(
+    LEVEL_STREAK_THRESHOLD[next] - streak,
+    state.declinedAt
+      ? DECLINE_GRACE_DAYS - daysBetween(state.declinedAt, now)
+      : 0,
+    state.lastUpgradeAt
+      ? UPGRADE_COOLDOWN_DAYS - daysBetween(state.lastUpgradeAt, now)
+      : 0,
+  );
+  if (daysLeft <= 0) return { kind: 'ready', next };
+  return { kind: 'wait', next, daysLeft };
+}
+
 export function shouldOfferUpgrade(
   streak: number,
   state: ProgressionState,
-): { offer: boolean; nextLvl: ProgressionLevel } | null {
-  const target = levelFromStreak(streak);
-  if (target <= state.currentLevel) return null;
-  if (state.offeredUpgrade) return null;
-  if (state.declinedAt) {
-    const since = daysBetween(state.declinedAt, new Date());
-    if (since < DECLINE_GRACE_DAYS) return null;
-  }
-  return { offer: true, nextLvl: target };
+  now: Date = new Date(),
+): { nextLvl: ProgressionLevel } | null {
+  const progress = levelProgress(streak, state, now);
+  return progress.kind === 'ready' ? { nextLvl: progress.next } : null;
 }
 
 export function applyUpgradeAcceptance(
   state: ProgressionState,
-  toLevel: ProgressionLevel,
+  now: Date = new Date(),
 ): ProgressionState {
+  if (state.currentLevel >= 4) return state;
+  const next = (state.currentLevel + 1) as ProgressionLevel;
+  const level3 = LEVEL_DURATIONS[3];
   return {
     ...state,
-    currentLevel: toLevel,
-    offeredUpgrade: true,
+    currentLevel: next,
     declinedAt: null,
+    lastUpgradeAt: now.toISOString(),
+    // Уровень 4 стартует с длительностей уровня 3, дальше их меняют в настройках.
+    customDurations:
+      next === 4 && !state.customDurations
+        ? {
+            breathing: level3.breathing,
+            grounding: level3.grounding,
+            gratitude: level3.gratitude,
+          }
+        : state.customDurations,
   };
 }
 
-export function applyUpgradeDecline(state: ProgressionState): ProgressionState {
-  return {
-    ...state,
-    offeredUpgrade: true,
-    declinedAt: new Date().toISOString(),
-  };
+export function applyUpgradeDecline(
+  state: ProgressionState,
+  now: Date = new Date(),
+): ProgressionState {
+  return { ...state, declinedAt: now.toISOString() };
 }
 
-export function resetUpgradeOffer(state: ProgressionState): ProgressionState {
-  return { ...state, offeredUpgrade: false, declinedAt: null };
-}
-
+// Один откат на перерыв: rollbackAnchor помнит ритуал, после которого он уже был,
+// и следующий откат возможен только после нового ритуала.
 export function maybeRollback(
   state: ProgressionState,
-  lastSession: CompletedSession | null,
+  lastRitual: CompletedSession | null,
+  now: Date = new Date(),
 ): ProgressionState {
   if (state.currentLevel <= 1) return state;
-  if (!lastSession) return state;
-  const days = daysBetween(lastSession.date, new Date());
+  if (!lastRitual) return state;
+  if (state.rollbackAnchor === lastRitual.date) return state;
+  const days = daysBetween(lastRitual.date, now);
   if (days <= STREAK_BREAK_GRACE_DAYS) return state;
   const newLevel = previousLevel(state.currentLevel);
   return {
     ...state,
     currentLevel: newLevel,
-    offeredUpgrade: false,
     declinedAt: null,
+    rollbackAnchor: lastRitual.date,
+    rollbackNotice: { from: state.currentLevel, to: newLevel },
   };
 }
 

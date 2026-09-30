@@ -14,33 +14,29 @@ import {
   applyUpgradeAcceptance,
   applyUpgradeDecline,
   getDurations,
+  levelProgress,
   maybeRollback,
-  resetUpgradeOffer,
   shouldOfferUpgrade,
 } from '@/lib/progression';
+import { DEFAULT_PROGRESSION } from '@/lib/constants';
 import type {
   CustomDurations,
   LevelDurations,
+  LevelProgress,
   ProgressionLevel,
   ProgressionState,
 } from '@/lib/types';
+import { dayKeyToDate } from '@/lib/utils';
 import { useHistory } from './HistoryContext';
-
-const INITIAL: ProgressionState = {
-  currentLevel: 1,
-  offeredUpgrade: false,
-  declinedAt: null,
-  lastStreakBeforeBreak: 0,
-  customDurations: null,
-};
 
 type ProgressionContextValue = {
   state: ProgressionState;
   durations: LevelDurations;
-  upgradeOffer: { offer: boolean; nextLvl: ProgressionLevel } | null;
-  acceptUpgrade: (lvl: ProgressionLevel) => void;
+  progress: LevelProgress;
+  upgradeOffer: { nextLvl: ProgressionLevel } | null;
+  acceptUpgrade: () => void;
   declineUpgrade: () => void;
-  resetOffer: () => void;
+  dismissRollbackNotice: () => void;
   resetLevel: () => void;
   setCustomDurations: (d: CustomDurations) => void;
   hydrated: boolean;
@@ -49,8 +45,8 @@ type ProgressionContextValue = {
 const ProgressionContext = createContext<ProgressionContextValue | null>(null);
 
 export function ProgressionProvider({ children }: { children: ReactNode }) {
-  const { sessions, streak } = useHistory();
-  const [state, setState] = useState<ProgressionState>(INITIAL);
+  const { streak, lastRitual, todayKey, hydrated: historyHydrated } = useHistory();
+  const [state, setState] = useState<ProgressionState>(DEFAULT_PROGRESSION);
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
@@ -58,37 +54,46 @@ export function ProgressionProvider({ children }: { children: ReactNode }) {
     setHydrated(true);
   }, []);
 
+  // Откат проверяется при запуске, после нового ритуала и при смене дня.
+  // Повторно на том же перерыве он не сработает: maybeRollback запоминает
+  // ритуал в rollbackAnchor, и якорь переживает перезагрузку.
   useEffect(() => {
-    if (!hydrated) return;
-    const rituals = sessions.filter((s) => s.kind !== 'technique');
-    const lastSession =
-      rituals.length > 0 ? rituals[rituals.length - 1] ?? null : null;
-    const rolled = maybeRollback(state, lastSession);
-    if (rolled.currentLevel !== state.currentLevel) {
+    if (!hydrated || !historyHydrated) return;
+    const rolled = maybeRollback(state, lastRitual);
+    if (rolled !== state) {
       setState(rolled);
       progressionStorage.save(rolled);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hydrated, sessions.length]);
+  }, [hydrated, historyHydrated, state, lastRitual, todayKey]);
 
   const persist = useCallback((next: ProgressionState) => {
     setState(next);
     progressionStorage.save(next);
   }, []);
 
-  const acceptUpgrade = useCallback(
-    (lvl: ProgressionLevel) => persist(applyUpgradeAcceptance(state, lvl)),
+  // «Сейчас» для расчёта уровня — день из todayKey: прогресс пересчитывается
+  // при смене дня, даже если приложение всё это время было в памяти.
+  const today = useMemo(() => dayKeyToDate(todayKey), [todayKey]);
+  const upgradeOffer = useMemo(
+    () =>
+      hydrated && historyHydrated
+        ? shouldOfferUpgrade(streak, state, today)
+        : null,
+    [hydrated, historyHydrated, streak, state, today],
+  );
+
+  // Без действующего предложения ответ игнорируется — от повторных нажатий.
+  const acceptUpgrade = useCallback(() => {
+    if (upgradeOffer) persist(applyUpgradeAcceptance(state));
+  }, [persist, state, upgradeOffer]);
+  const declineUpgrade = useCallback(() => {
+    if (upgradeOffer) persist(applyUpgradeDecline(state));
+  }, [persist, state, upgradeOffer]);
+  const dismissRollbackNotice = useCallback(
+    () => persist({ ...state, rollbackNotice: null }),
     [persist, state],
   );
-  const declineUpgrade = useCallback(
-    () => persist(applyUpgradeDecline(state)),
-    [persist, state],
-  );
-  const resetOffer = useCallback(
-    () => persist(resetUpgradeOffer(state)),
-    [persist, state],
-  );
-  const resetLevel = useCallback(() => persist(INITIAL), [persist]);
+  const resetLevel = useCallback(() => persist(DEFAULT_PROGRESSION), [persist]);
   const setCustomDurations = useCallback(
     (d: CustomDurations) => persist({ ...state, customDurations: d }),
     [persist, state],
@@ -96,14 +101,15 @@ export function ProgressionProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo(() => {
     const durations = getDurations(state.currentLevel, state.customDurations);
-    const upgradeOffer = hydrated ? shouldOfferUpgrade(streak, state) : null;
+    const progress = levelProgress(streak, state, today);
     return {
       state,
       durations,
+      progress,
       upgradeOffer,
       acceptUpgrade,
       declineUpgrade,
-      resetOffer,
+      dismissRollbackNotice,
       resetLevel,
       setCustomDurations,
       hydrated,
@@ -111,10 +117,12 @@ export function ProgressionProvider({ children }: { children: ReactNode }) {
   }, [
     state,
     streak,
+    today,
     hydrated,
+    upgradeOffer,
     acceptUpgrade,
     declineUpgrade,
-    resetOffer,
+    dismissRollbackNotice,
     resetLevel,
     setCustomDurations,
   ]);

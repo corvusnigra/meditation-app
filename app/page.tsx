@@ -23,7 +23,11 @@ export default function HomePage() {
   const router = useRouter();
   const { start } = useSession();
   const { streak, sessions } = useHistory();
-  const { durations, state: progression } = useProgressionContext();
+  const {
+    durations,
+    state: progression,
+    dismissRollbackNotice,
+  } = useProgressionContext();
   const { settings } = useSettings();
   const [selected, setSelected] = useState<Scenario>('custom');
 
@@ -48,6 +52,23 @@ export default function HomePage() {
           </Link>
         </nav>
       </header>
+
+      {progression.rollbackNotice && (
+        <div className="mt-4 flex items-center gap-3 rounded-2xl bg-bg-card/60 border border-white/5 p-4">
+          <p className="flex-1 text-sm text-text-secondary">
+            Перерыв больше трёх дней — вернул уровень{' '}
+            {progression.rollbackNotice.to}, чтобы было легче втянуться.
+          </p>
+          <HapticButton
+            variant="ghost"
+            size="sm"
+            className="shrink-0"
+            onClick={dismissRollbackNotice}
+          >
+            Понятно
+          </HapticButton>
+        </div>
+      )}
 
       <div className="flex-1 flex flex-col items-center justify-center text-center gap-8 py-10">
         <motion.div

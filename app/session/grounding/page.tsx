@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { PageShell } from '@/components/shared/PageShell';
@@ -21,19 +21,27 @@ export default function GroundingPage() {
   const { state, advance, pause, resume, setGroundingSense } = useSession();
   const { durations } = useProgressionContext();
   const [showPause, setShowPause] = useState(false);
+  const [timeUp, setTimeUp] = useState(false);
+  const closedRef = useRef(false);
 
   useWakeLock(true);
 
   const totalSec = durations.grounding;
 
+  // Таймер — ориентир, а не обрыв: шаги заканчивает сам человек,
+  // по истечении времени появляется только подсказка.
   const timer = useTimer({
     durationSec: totalSec,
     autoStart: true,
-    onComplete: () => {
-      advance('gratitude');
-      router.push('/session/gratitude');
-    },
+    onComplete: () => setTimeUp(true),
   });
+
+  const goToGratitude = () => {
+    if (closedRef.current) return;
+    closedRef.current = true;
+    advance('gratitude');
+    router.push('/session/gratitude');
+  };
 
   useEffect(() => {
     if (state.status === 'idle') {
@@ -44,7 +52,7 @@ export default function GroundingPage() {
   const handleNext = () => {
     const next = state.groundingSense + 1;
     if (next >= GROUNDING_SENSES.length) {
-      timer.finish();
+      goToGratitude();
       return;
     }
     setGroundingSense(next);
@@ -64,7 +72,7 @@ export default function GroundingPage() {
 
   const handleSkip = () => {
     setShowPause(false);
-    timer.finish();
+    goToGratitude();
   };
 
   const handleExit = () => {
@@ -78,7 +86,13 @@ export default function GroundingPage() {
         <PhaseProgressBar currentPhase="grounding" phaseProgress={timer.progress} />
         <div className="flex items-center justify-between text-xs text-text-secondary">
           <span className="uppercase tracking-widest">5–4–3–2–1</span>
-          <Timer remainingSec={Math.ceil(timer.remaining)} />
+          {timeUp ? (
+            <span className="text-accent-grounding">
+              не спешите — закончите шаг
+            </span>
+          ) : (
+            <Timer remainingSec={Math.ceil(timer.remaining)} />
+          )}
         </div>
       </div>
 

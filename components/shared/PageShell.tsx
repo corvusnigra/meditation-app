@@ -9,7 +9,7 @@ export function PageShell({
   return (
     <main
       className={cn(
-        'mx-auto w-full max-w-md min-h-[100dvh] px-5 py-6 flex flex-col',
+        'mx-auto w-full max-w-md min-h-[100dvh] px-5 py-6 flex flex-col overflow-x-clip',
         className,
       )}
       {...rest}
