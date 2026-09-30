@@ -8,10 +8,9 @@ import {
   type PauseReason,
   type PracticeClock,
 } from './usePracticeClock';
-import { usePracticeSignals, type PracticeSignals } from './usePracticeSignals';
+import { usePracticeSignals, type PracticeSignals, unlockBounded } from './usePracticeSignals';
 import { useWakeLock } from './useWakeLock';
 
-const UNLOCK_WAIT_MS = 300;
 
 export type PracticeController = {
   clock: PracticeClock;
@@ -40,8 +39,7 @@ export function usePracticeController(): PracticeController {
   // Звук включается до часов, чтобы сигнал текущей фазы уже прозвучал. Ждать
   // его дольше UNLOCK_WAIT_MS нельзя: практика не должна зависеть от аудио.
   const resume = useCallback(() => {
-    const waited = new Promise<void>((resolve) => setTimeout(resolve, UNLOCK_WAIT_MS));
-    void Promise.race([signals.unlock().catch(() => {}), waited]).then(() => {
+    void unlockBounded(signals).then(() => {
       // Пока ждали, приложение могли свернуть: пауза остаётся.
       if (document.visibilityState !== 'hidden') clock.resume();
     });

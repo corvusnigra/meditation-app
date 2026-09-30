@@ -4,7 +4,8 @@ import { Card } from '@/components/ui/Card';
 import { TONE } from '@/components/ui/tones';
 import { findTechnique } from '@/lib/breathing-techniques';
 import { SCENARIO_LABEL, LEVEL_LABEL } from '@/lib/constants';
-import { cn, formatLongDate } from '@/lib/utils';
+import { unitsOfLabel } from '@/lib/practice';
+import { cn, formatLongDate, formatSpentDuration } from '@/lib/utils';
 import type { CompletedSession } from '@/lib/types';
 
 type Props = {
@@ -14,9 +15,17 @@ type Props = {
 export function SessionCard({ session }: Props) {
   const minutes = Math.max(Math.round(session.durationMs / 60000), 1);
   const isTechnique = session.kind === 'technique';
-  const seconds = Math.round(session.durationMs / 1000);
-  const durationLabel =
-    isTechnique && seconds < 90 ? `${seconds} сек` : `${minutes} мин`;
+  const durationLabel = isTechnique
+    ? formatSpentDuration(session.durationMs)
+    : `${minutes} мин`;
+  // Практика, законченная раньше плана, показывает, сколько сделано.
+  const partial =
+    session.done !== undefined &&
+    session.planned !== undefined &&
+    session.unit !== undefined &&
+    session.done < session.planned
+      ? unitsOfLabel(session.done, session.planned, session.unit)
+      : null;
   // Имя — из каталога, чтобы старые записи показывали нынешнее название;
   // у техник, которых в каталоге уже нет, остаётся сохранённое.
   const techniqueName =
@@ -44,7 +53,10 @@ export function SessionCard({ session }: Props) {
         {isTechnique ? 'Техника' : SCENARIO_LABEL[session.scenario]}
       </div>
       {isTechnique ? (
-        <p className="text-sm text-text-primary/80">{techniqueName}</p>
+        <p className="text-sm text-text-primary/80">
+          {techniqueName}
+          {partial && <span className="text-text-secondary"> · {partial}</span>}
+        </p>
       ) : session.gratitudeText ? (
         <p className="text-sm text-text-primary/80 leading-relaxed">
           «{session.gratitudeText}»

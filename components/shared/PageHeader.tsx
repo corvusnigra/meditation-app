@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 
 type Props = {
   back?: { href: string; label: string };
-  title: string;
+  title?: string;
   right?: ReactNode;
 };
 
@@ -19,7 +19,7 @@ export function PageHeader({ back, title, right }: Props) {
           {back.label}
         </Link>
       )}
-      <h1>{title}</h1>
+      {title && <h1>{title}</h1>}
       {right}
     </header>
   );

@@ -17,6 +17,8 @@ import { useProgressionContext } from '@/context/ProgressionContext';
 import { useClockTick } from '@/hooks/usePracticeClock';
 import { usePracticeController } from '@/hooks/usePracticeController';
 import { GRATITUDE_PLACEHOLDER, GRATITUDE_PROMPTS } from '@/lib/constants';
+import { ritualCounted } from '@/lib/practice';
+import type { PhaseId } from '@/lib/types';
 import { randomId } from '@/lib/utils';
 
 export default function GratitudePage() {
@@ -40,7 +42,25 @@ export default function GratitudePage() {
     setReachedMinimum(true);
   });
 
+  // Благодарность засчитывается кнопкой «Готово». Если обе фазы до неё
+  // пропущены, ритуал в историю не попадает — кнопка говорит об этом заранее.
+  const phases: PhaseId[] = [...state.completedPhases, 'gratitude'];
+  const counted = ritualCounted(phases);
+
+  const handleExit = () => {
+    if (closedRef.current) return;
+    closedRef.current = true;
+    practice.leave(() => {
+      reset();
+      router.replace('/');
+    });
+  };
+
   const handleFinish = () => {
+    if (!counted) {
+      handleExit();
+      return;
+    }
     if (closedRef.current) return;
     closedRef.current = true;
     add({
@@ -49,7 +69,7 @@ export default function GratitudePage() {
       scenario: state.scenario,
       gratitudeText: state.gratitudeText.trim(),
       durationMs: Math.round(state.activeMs + clock.now()),
-      completedPhases: [...state.completedPhases, 'gratitude'],
+      completedPhases: phases,
       level: progression.currentLevel,
     });
     advance('complete');
@@ -61,15 +81,6 @@ export default function GratitudePage() {
       router.replace('/');
     }
   }, [state.status, router]);
-
-  const handleExit = () => {
-    if (closedRef.current) return;
-    closedRef.current = true;
-    practice.leave(() => {
-      reset();
-      router.replace('/');
-    });
-  };
 
   return (
     <PageShell>
@@ -122,18 +133,25 @@ export default function GratitudePage() {
         )}
       </motion.div>
 
-      <div className="flex justify-center gap-3 pb-6">
-        <HapticButton variant="ghost" size="md" onClick={() => practice.pause('user')}>
-          Пауза
-        </HapticButton>
-        <HapticButton
-          variant="primary"
-          size="md"
-          onClick={handleFinish}
-          haptic="success"
-        >
-          Готово
-        </HapticButton>
+      <div className="space-y-3 pb-6">
+        {!counted && (
+          <p className="text-center text-xs text-text-secondary text-balance">
+            Дыхание и заземление пропущены — такой ритуал в историю не попадёт.
+          </p>
+        )}
+        <div className="flex justify-center gap-3">
+          <HapticButton variant="ghost" size="md" onClick={() => practice.pause('user')}>
+            Пауза
+          </HapticButton>
+          <HapticButton
+            variant={counted ? 'primary' : 'subtle'}
+            size="md"
+            onClick={handleFinish}
+            haptic={counted ? 'success' : 'tap'}
+          >
+            {counted ? 'Готово' : 'Выйти без записи'}
+          </HapticButton>
+        </div>
       </div>
 
       <PauseOverlay

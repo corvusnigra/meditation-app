@@ -1,163 +1,119 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
+import type { PhaseDef } from '@/lib/practice';
+import type { WimHofTechniqueConfig } from '@/lib/types';
+import { usePhaseCycle } from './usePhaseCycle';
+import type { PracticeClock } from './usePracticeClock';
+import type { PracticeSignals } from './usePracticeSignals';
+import { unlockBounded } from './usePracticeSignals';
 
-export type WimHofStage = 'breathing' | 'retention' | 'recovery' | 'completed';
+export type WimHofStage = 'breathing' | 'retention' | 'recovery';
 
 type Options = {
-  rounds: number;
-  breathsPerRound: number;
-  breathCycleSec: number;
-  recoveryHoldSec: number;
-  onStageChange?: (stage: WimHofStage, round: number) => void;
-  onBreath?: (n: number) => void;
+  config: WimHofTechniqueConfig;
+  clock: PracticeClock;
+  signals: PracticeSignals;
+  running: boolean;
+  onComplete: () => void;
 };
 
-type Result = {
+type Step = {
   stage: WimHofStage;
   round: number;
-  breathCount: number;
-  breathInhale: boolean;
-  retentionElapsed: number;
-  recoveryRemaining: number;
-  endRetention: () => void;
-  finishEarly: () => void;
-  reset: () => void;
+  // Начало этапа на часах практики.
+  startSec: number;
+  // Раунд засчитан, когда задержку на выдохе закончили вдохом.
+  roundsDone: number;
 };
 
-const TICK_MS = 100;
+type Result = Step & {
+  // Номер текущего вдоха в раунде, с нуля.
+  breath: number;
+  inhaling: boolean;
+  endRetention: () => void;
+};
 
-export function useWimHof({
-  rounds,
-  breathsPerRound,
-  breathCycleSec,
-  recoveryHoldSec,
-  onStageChange,
-  onBreath,
-}: Options): Result {
-  const [stage, setStage] = useState<WimHofStage>('breathing');
-  const [round, setRound] = useState(0);
-  const [breathCount, setBreathCount] = useState(0);
-  const [breathInhale, setBreathInhale] = useState(true);
-  const [retentionElapsed, setRetentionElapsed] = useState(0);
-  const [recoveryRemaining, setRecoveryRemaining] = useState(recoveryHoldSec);
-
-  const startRef = useRef<number>(performance.now());
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const stageRef = useRef<WimHofStage>('breathing');
-  const roundRef = useRef(0);
-  const onStageRef = useRef(onStageChange);
-  const onBreathRef = useRef(onBreath);
-
-  useEffect(() => {
-    onStageRef.current = onStageChange;
-    onBreathRef.current = onBreath;
+// Раунды Вим Хофа на общих часах практики: быстрое дыхание, задержка на выдохе
+// (её заканчивает сам человек) и задержка на вдохе. Пауза и сворачивание
+// останавливают все три этапа вместе с часами.
+export function useWimHof({ config, clock, signals, running, onComplete }: Options): Result {
+  const wakingRef = useRef(false);
+  const [step, setStep] = useState<Step>({
+    stage: 'breathing',
+    round: 0,
+    startSec: 0,
+    roundsDone: 0,
   });
 
-  const clearLoop = useCallback(() => {
-    if (intervalRef.current !== null) {
-      clearInterval(intervalRef.current);
-      intervalRef.current = null;
-    }
-  }, []);
-
-  const transitionTo = useCallback(
-    (next: WimHofStage) => {
-      stageRef.current = next;
-      setStage(next);
-      startRef.current = performance.now();
-      onStageRef.current?.(next, roundRef.current);
-    },
-    [],
+  const halfSec = config.breathCycleSec / 2;
+  const breathPhases = useMemo<PhaseDef<'inhale' | 'exhale'>[]>(
+    () => [
+      { id: 'inhale', sec: halfSec },
+      { id: 'exhale', sec: halfSec },
+    ],
+    [halfSec],
+  );
+  const holdPhases = useMemo<PhaseDef<'holdIn'>[]>(
+    () => [{ id: 'holdIn', sec: config.recoveryHoldSec }],
+    [config.recoveryHoldSec],
   );
 
-  const breathingTick = useCallback(() => {
-    const elapsed = (performance.now() - startRef.current) / 1000;
-    const breathIdx = Math.floor(elapsed / breathCycleSec);
-    const inCycle = (elapsed % breathCycleSec) / breathCycleSec;
-    setBreathInhale(inCycle < 0.5);
-    if (breathIdx !== breathCount) {
-      setBreathCount(breathIdx);
-      onBreathRef.current?.(breathIdx);
-    }
-    if (breathIdx >= breathsPerRound) {
-      transitionTo('retention');
-    }
-  }, [breathCount, breathCycleSec, breathsPerRound, transitionTo]);
+  const go = (stage: WimHofStage, round: number, roundsDone: number) => {
+    setStep({ stage, round, roundsDone, startSec: clock.now() / 1000 });
+  };
 
-  const retentionTick = useCallback(() => {
-    setRetentionElapsed((performance.now() - startRef.current) / 1000);
-  }, []);
+  const breathing = usePhaseCycle({
+    phases: breathPhases,
+    cycles: config.breathsPerRound,
+    clock,
+    enabled: running && step.stage === 'breathing',
+    startSec: step.startSec,
+    onPhase: (phase, sec, info) => {
+      signals.phase(phase, sec, { resumed: info.resumed, light: true });
+    },
+    onComplete: () => {
+      signals.silence();
+      signals.stage('step');
+      go('retention', step.round, step.roundsDone);
+    },
+  });
 
-  const recoveryTick = useCallback(() => {
-    const elapsed = (performance.now() - startRef.current) / 1000;
-    const remaining = Math.max(recoveryHoldSec - elapsed, 0);
-    setRecoveryRemaining(remaining);
-    if (remaining <= 0) {
-      // round complete
-      const nextRound = roundRef.current + 1;
-      if (nextRound >= rounds) {
-        clearLoop();
-        stageRef.current = 'completed';
-        setStage('completed');
-        onStageRef.current?.('completed', roundRef.current);
+  usePhaseCycle({
+    phases: holdPhases,
+    cycles: 1,
+    clock,
+    enabled: running && step.stage === 'recovery',
+    startSec: step.startSec,
+    onPhase: (phase, sec, info) => {
+      signals.phase(phase, sec, { resumed: info.resumed });
+    },
+    onComplete: () => {
+      const next = step.round + 1;
+      if (next >= config.rounds) {
+        onComplete();
         return;
       }
-      roundRef.current = nextRound;
-      setRound(nextRound);
-      setBreathCount(0);
-      setRetentionElapsed(0);
-      setRecoveryRemaining(recoveryHoldSec);
-      transitionTo('breathing');
-    }
-  }, [clearLoop, recoveryHoldSec, rounds, transitionTo]);
+      signals.silence();
+      signals.stage('step');
+      go('breathing', next, step.roundsDone);
+    },
+  });
 
-  useEffect(() => {
-    intervalRef.current = setInterval(() => {
-      const current = stageRef.current;
-      if (current === 'breathing') breathingTick();
-      else if (current === 'retention') retentionTick();
-      else if (current === 'recovery') recoveryTick();
-    }, TICK_MS);
-
-    return () => clearLoop();
-  }, [breathingTick, retentionTick, recoveryTick, clearLoop]);
-
-  const endRetention = useCallback(() => {
-    if (stageRef.current !== 'retention') return;
-    setRecoveryRemaining(recoveryHoldSec);
-    transitionTo('recovery');
-  }, [recoveryHoldSec, transitionTo]);
-
-  const finishEarly = useCallback(() => {
-    clearLoop();
-    stageRef.current = 'completed';
-    setStage('completed');
-    onStageRef.current?.('completed', roundRef.current);
-  }, [clearLoop]);
-
-  const reset = useCallback(() => {
-    clearLoop();
-    stageRef.current = 'breathing';
-    roundRef.current = 0;
-    setStage('breathing');
-    setRound(0);
-    setBreathCount(0);
-    setBreathInhale(true);
-    setRetentionElapsed(0);
-    setRecoveryRemaining(recoveryHoldSec);
-    startRef.current = performance.now();
-  }, [clearLoop, recoveryHoldSec]);
+  const endRetention = () => {
+    if (step.stage !== 'retention' || wakingRef.current) return;
+    // Касание будит звук, если он уснул за долгую задержку.
+    wakingRef.current = true;
+    void unlockBounded(signals).then(() => {
+      wakingRef.current = false;
+      go('recovery', step.round, step.round + 1);
+    });
+  };
 
   return {
-    stage,
-    round,
-    breathCount,
-    breathInhale,
-    retentionElapsed,
-    recoveryRemaining,
+    ...step,
+    breath: breathing.cycleIndex,
+    inhaling: breathing.phase === 'inhale',
     endRetention,
-    finishEarly,
-    reset,
   };
 }

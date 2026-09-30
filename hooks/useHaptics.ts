@@ -66,19 +66,3 @@ export function useHaptics(enabled: boolean): (pattern: HapticPattern) => void {
     [enabled],
   );
 }
-
-export function usePhaseHaptics(
-  guideEnabled: boolean,
-  fallbackEnabled: boolean,
-): (phase: BreathingPhase) => void {
-  return useCallback(
-    (phase: BreathingPhase) => {
-      if (guideEnabled) {
-        vibrateRaw(PHASE_PATTERNS[phase]);
-      } else if (fallbackEnabled) {
-        vibrateRaw(PATTERNS.tap);
-      }
-    },
-    [guideEnabled, fallbackEnabled],
-  );
-}

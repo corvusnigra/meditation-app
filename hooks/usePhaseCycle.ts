@@ -2,12 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { locatePhase, type PhaseDef } from '@/lib/practice';
-import {
-  useClockTick,
-  usePracticeClock,
-  type ClockEvent,
-  type PracticeClock,
-} from './usePracticeClock';
+import type { ClockEvent, PracticeClock } from './usePracticeClock';
 
 export type PhaseInfo = {
   // Первая фаза практики.
@@ -23,6 +18,9 @@ type Options<Id extends string> = {
   cycles: number;
   clock: PracticeClock;
   enabled: boolean;
+  // Момент на часах практики, с которого идёт отсчёт цикла. Новое значение
+  // начинает цикл заново — так этап техники повторяется в следующем раунде.
+  startSec?: number;
   // Срабатывает на каждой фазе, включая первую, и повторно после паузы.
   // sec — сколько фазе осталось.
   onPhase?: (phase: Id, sec: number, info: PhaseInfo) => void;
@@ -32,6 +30,7 @@ type Options<Id extends string> = {
 type State = {
   index: number;
   cycleIndex: number;
+  // На часах практики, а не от начала цикла.
   phaseStartSec: number;
   completed: boolean;
 };
@@ -55,13 +54,15 @@ export function usePhaseCycle<Id extends string>({
   cycles,
   clock,
   enabled,
+  startSec = 0,
   onPhase,
   onComplete,
 }: Options<Id>): Result<Id> {
-  const [state, setState] = useState<State>(() => ({
+  const [run, setRun] = useState<State & { startSec: number }>(() => ({
+    startSec,
     index: firstPhaseIndex(phases),
     cycleIndex: 0,
-    phaseStartSec: 0,
+    phaseStartSec: startSec,
     completed: false,
   }));
 
@@ -75,6 +76,8 @@ export function usePhaseCycle<Id extends string>({
 
   useEffect(() => {
     if (!enabled) return;
+    emittedRef.current = null;
+    completedRef.current = false;
 
     const evaluate = (event: ClockEvent) => {
       if (event === 'pause') return;
@@ -85,12 +88,12 @@ export function usePhaseCycle<Id extends string>({
       if (completedRef.current || clock.isPaused()) return;
 
       const current = latest.current;
-      const tSec = clock.now() / 1000;
+      const tSec = clock.now() / 1000 - startSec;
       const loc = locatePhase(current.phases, current.cycles, tSec);
 
       if (loc.done) {
         completedRef.current = true;
-        setState((prev) => ({ ...prev, cycleIndex: loc.cycle, completed: true }));
+        setRun((prev) => ({ ...prev, startSec, cycleIndex: loc.cycle, completed: true }));
         current.onComplete?.();
         return;
       }
@@ -105,10 +108,11 @@ export function usePhaseCycle<Id extends string>({
       if (!changed && remainingSec < RESUME_CUE_MIN_SEC) return;
       if (changed) {
         emittedRef.current = { cycle: loc.cycle, index: loc.index };
-        setState({
+        setRun({
+          startSec,
           index: loc.index,
           cycleIndex: loc.cycle,
-          phaseStartSec: loc.phaseStartSec,
+          phaseStartSec: startSec + loc.phaseStartSec,
           completed: false,
         });
       }
@@ -122,35 +126,26 @@ export function usePhaseCycle<Id extends string>({
 
     evaluate('tick');
     return clock.subscribe(evaluate);
-  }, [enabled, clock]);
+  }, [enabled, clock, startSec]);
 
+  // Состояние прошлого запуска не показываем: до первого тика нового запуска
+  // цикл стоит на первой фазе.
+  const state: State =
+    run.startSec === startSec
+      ? run
+      : {
+          index: firstPhaseIndex(phases),
+          cycleIndex: 0,
+          phaseStartSec: startSec,
+          completed: false,
+        };
   const phase = phases[state.index] ?? phases[0];
-  return { ...state, phase: phase.id, phaseSec: phase.sec };
-}
-
-// Секунды с начала фазы как состояние — для экранов, которые ещё рисуют
-// счёт сами и перерисовываются на каждом тике.
-export function useSecondsInPhase(clock: PracticeClock, phaseStartSec: number): number {
-  const [snap, setSnap] = useState({ start: phaseStartSec, value: 0 });
-  useClockTick(clock, () => {
-    setSnap({
-      start: phaseStartSec,
-      value: Math.max(clock.now() / 1000 - phaseStartSec, 0),
-    });
-  });
-  // На тике смены фазы слушатель ещё считает от начала прошлой фазы:
-  // такое значение не показываем, берём время из часов.
-  return snap.start === phaseStartSec
-    ? snap.value
-    : Math.max(clock.now() / 1000 - phaseStartSec, 0);
-}
-
-// Часы, которыми управляет флаг active, — для тех же экранов.
-export function useActiveClock(active: boolean): PracticeClock {
-  const { clock } = usePracticeClock({ autoStart: false, skipIdle: false });
-  useEffect(() => {
-    if (active) clock.resume();
-    else clock.pause('user');
-  }, [active, clock]);
-  return clock;
+  return {
+    index: state.index,
+    cycleIndex: state.cycleIndex,
+    phaseStartSec: state.phaseStartSec,
+    completed: state.completed,
+    phase: phase.id,
+    phaseSec: phase.sec,
+  };
 }

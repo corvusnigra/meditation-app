@@ -10,7 +10,11 @@ import { HapticButton } from '@/components/shared/HapticButton';
 import { BreathingGuide, PHASE_LABEL } from '@/components/breathing/BreathingGuide';
 import { AmbientVisualizer } from '@/components/breathing/AmbientVisualizer';
 import { PracticeHeader } from '@/components/practice/PracticeHeader';
-import { PracticeCircle, CIRCLE_REST_SCALE } from '@/components/practice/PracticeCircle';
+import {
+  BREATH_SCALE,
+  CIRCLE_REST_SCALE,
+  PracticeCircle,
+} from '@/components/practice/PracticeCircle';
 import { StartCountdown } from '@/components/practice/StartCountdown';
 import { SignalToggle } from '@/components/practice/SignalToggle';
 import { PhaseAnnouncer } from '@/components/practice/PhaseAnnouncer';
@@ -22,15 +26,7 @@ import { usePhaseCycle } from '@/hooks/usePhaseCycle';
 import { usePracticeController } from '@/hooks/usePracticeController';
 import { RITUAL_ENTRAINMENT_HZ } from '@/lib/entrainment';
 import { breathingPhases, phaseCounted, ritualCycles } from '@/lib/practice';
-import type { BreathingPhase } from '@/lib/types';
 import { formatTime } from '@/lib/utils';
-
-const SCALE: Record<BreathingPhase, number> = {
-  inhale: 1,
-  holdIn: 1,
-  exhale: CIRCLE_REST_SCALE,
-  holdOut: CIRCLE_REST_SCALE,
-};
 
 export default function BreathingPage() {
   const router = useRouter();
@@ -65,7 +61,7 @@ export default function BreathingPage() {
     clock,
     enabled: running,
     onPhase: (phase, sec, info) => {
-      if (!closedRef.current) signals.phase(phase, sec, info.resumed);
+      if (!closedRef.current) signals.phase(phase, sec, { resumed: info.resumed });
     },
     onComplete: () => goToGrounding(cycles),
   });
@@ -135,7 +131,7 @@ export default function BreathingPage() {
 
       <div className="relative flex-1 flex flex-col items-center justify-center gap-10">
         <PracticeCircle
-          scale={running ? SCALE[cycle.phase] : CIRCLE_REST_SCALE}
+          scale={running ? BREATH_SCALE[cycle.phase] : CIRCLE_REST_SCALE}
           durationSec={
             running && (cycle.phase === 'inhale' || cycle.phase === 'exhale')
               ? cycle.phaseSec

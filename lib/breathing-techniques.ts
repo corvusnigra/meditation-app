@@ -210,7 +210,8 @@ export function techniquesByCategory(
 // В истории встречаются техники, которых уже нет в каталоге, — для них undefined.
 export function findTechnique(id: string | undefined): BreathingTechnique | undefined {
   if (!id) return undefined;
-  return (TECHNIQUES as Record<string, BreathingTechnique | undefined>)[id];
+  if (!Object.hasOwn(TECHNIQUES, id)) return undefined;
+  return (TECHNIQUES as Record<string, BreathingTechnique>)[id];
 }
 
 // --- Адаптивная прогрессия (только box-техники с лестницей) ---
@@ -261,7 +262,7 @@ export function adjustLevel(
 
 // --- Расчётная длительность ---
 
-// Один двойной вздох: вдох 1,5 с, довдох 0,5 с, выдох 5 с (hooks/useSighCycle.ts).
+// Один двойной вздох: вдох 1,5 с, довдох 0,5 с, выдох 5 с (components/techniques/runners/SighRunner.tsx).
 const SIGH_CYCLE_SEC = 7;
 
 // Задержку на выдохе в методе Вим Хофа человек заканчивает сам;

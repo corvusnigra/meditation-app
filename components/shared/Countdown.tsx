@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useLayoutEffect, useState } from 'react';
 import { useClockTick, type PracticeClock } from '@/hooks/usePracticeClock';
 import { formatTime } from '@/lib/utils';
 
@@ -14,13 +14,17 @@ type Props = {
   className?: string;
 };
 
+function remainingSec(clock: PracticeClock, endSec: number, min: number): number {
+  return Math.max(Math.ceil(endSec - clock.now() / 1000), min);
+}
+
 // Остаток времени читает из часов сам и перерисовывается раз в секунду —
 // страница практики при этом не обновляется.
 export function Countdown({ clock, endSec, format = 'seconds', min = 0, className }: Props) {
-  const remaining = () => Math.max(Math.ceil(endSec - clock.now() / 1000), min);
-  const [value, setValue] = useState(remaining);
+  const [value, setValue] = useState(() => remainingSec(clock, endSec, min));
 
-  useClockTick(clock, () => setValue(remaining()));
+  useClockTick(clock, () => setValue(remainingSec(clock, endSec, min)));
+  useLayoutEffect(() => setValue(remainingSec(clock, endSec, min)), [clock, endSec, min]);
 
   return (
     <span className={className}>{format === 'clock' ? formatTime(value) : value}</span>

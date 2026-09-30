@@ -126,7 +126,6 @@ export type BreathingTechnique = {
 };
 
 export type UserSettings = {
-  soundEnabled: boolean;
   ambientEnabled: boolean;
   ambientPreset: AmbientPreset;
   ambientVolume: number;

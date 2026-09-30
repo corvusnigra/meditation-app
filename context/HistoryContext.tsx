@@ -44,8 +44,11 @@ export function HistoryProvider({ children }: { children: ReactNode }) {
     setHydrated(true);
   }, []);
 
+  // Повтор id игнорируется: одна практика — одна запись, даже если завершение
+  // сработало дважды.
   const add = useCallback((session: CompletedSession) => {
     setSessions((prev) => {
+      if (prev.some((s) => s.id === session.id)) return prev;
       const next = [...prev, session];
       sessionsStorage.save(next);
       return next;

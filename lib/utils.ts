@@ -17,6 +17,13 @@ export function formatApproxDuration(seconds: number): string {
   return `≈ ${Math.round(seconds / 60)} мин`;
 }
 
+// Фактическая длительность практики: до полутора минут — в секундах.
+export function formatSpentDuration(durationMs: number): string {
+  const seconds = Math.round(durationMs / 1000);
+  if (seconds < 90) return `${seconds} сек`;
+  return `${Math.max(Math.round(durationMs / 60000), 1)} мин`;
+}
+
 // Русская плюрализация: plural(2, ['цикл', 'цикла', 'циклов']).
 export function plural(
   n: number,

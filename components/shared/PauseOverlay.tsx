@@ -25,7 +25,7 @@ export function PauseOverlay({
   onResume,
   onSkip,
   onExit,
-  exitLabel = 'Закончить сессию',
+  exitLabel = 'Выйти без записи',
   children,
 }: Props) {
   const titleId = useId();
@@ -53,8 +53,8 @@ export function PauseOverlay({
     reason === 'hidden'
       ? 'Приложение было свёрнуто — время остановлено.'
       : onSkip
-        ? 'Можно вернуться, пропустить фазу или закончить сессию.'
-        : 'Можно вернуться или закончить сессию.';
+        ? 'Можно вернуться, пропустить фазу или выйти.'
+        : 'Можно вернуться или выйти.';
 
   return (
     <AnimatePresence>

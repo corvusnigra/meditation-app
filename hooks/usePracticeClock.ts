@@ -19,13 +19,6 @@ export type PracticeClock = {
   subscribe: (listener: Listener) => () => void;
 };
 
-type Options = {
-  autoStart?: boolean;
-  // Вычитать время, пока таймеры вкладки стояли. Выключено у прежних экранов
-  // техник: у них практика в фоне идёт по настенным часам, как раньше.
-  skipIdle?: boolean;
-};
-
 type Result = {
   clock: PracticeClock;
   paused: boolean;
@@ -37,17 +30,15 @@ const TICK_MS = 100;
 // не считается практикой.
 const GAP_MS = 1000;
 
-export function usePracticeClock({
-  autoStart = true,
-  skipIdle = true,
-}: Options = {}): Result {
-  const [pause, setPause] = useState<{ paused: boolean; reason: PauseReason | null }>(
-    () => ({ paused: !autoStart, reason: autoStart ? null : 'user' }),
-  );
+export function usePracticeClock(): Result {
+  const [pause, setPause] = useState<{ paused: boolean; reason: PauseReason | null }>({
+    paused: false,
+    reason: null,
+  });
 
   const accumulatedRef = useRef(0);
   const startedAtRef = useRef<number | null>(null);
-  const pausedRef = useRef(!autoStart);
+  const pausedRef = useRef(false);
   const lastTickRef = useRef(0);
   const listenersRef = useRef(new Set<Listener>());
 
@@ -113,7 +104,7 @@ export function usePracticeClock({
       const wall = performance.now();
       const gap = wall - lastTickRef.current;
       lastTickRef.current = wall;
-      if (skipIdle && gap > GAP_MS) clock.exclude(gap);
+      if (gap > GAP_MS) clock.exclude(gap);
       listeners.forEach((listener) => listener('tick'));
     }, TICK_MS);
 
@@ -124,7 +115,7 @@ export function usePracticeClock({
         startedAtRef.current = null;
       }
     };
-  }, [clock, skipIdle]);
+  }, [clock]);
 
   return { clock, paused: pause.paused, reason: pause.reason };
 }

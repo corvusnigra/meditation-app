@@ -2,9 +2,6 @@
 
 import { useEffect } from 'react';
 import {
-  ensureAudio,
-  onBreathPhase,
-  playPhaseCue,
   setActive,
   setEntrainment,
   setVolume,
@@ -12,7 +9,7 @@ import {
   stopAmbient,
   stopCues,
 } from '@/lib/breathing-audio';
-import type { AmbientPreset, BreathingPhase } from '@/lib/types';
+import type { AmbientPreset } from '@/lib/types';
 
 type UseBreathingAudioOptions = {
   enabled: boolean; // ambient (дрон/мерцание)
@@ -21,15 +18,9 @@ type UseBreathingAudioOptions = {
   active: boolean;
   entrainment?: boolean; // слой амплитудной модуляции
   entrainmentHz?: number;
-  phaseSound?: boolean; // тон смены фазы без ambient
 };
 
-type UseBreathingAudioResult = {
-  unlock: () => Promise<void>;
-  onPhase: (phase: BreathingPhase, durationSec?: number) => void;
-  stop: () => void;
-};
-
+// Фон практики. Сигналы фаз идут отдельно — через usePracticeSignals.
 export function useBreathingAudio({
   enabled,
   preset,
@@ -37,8 +28,7 @@ export function useBreathingAudio({
   active,
   entrainment = false,
   entrainmentHz = 10,
-  phaseSound = false,
-}: UseBreathingAudioOptions): UseBreathingAudioResult {
+}: UseBreathingAudioOptions): void {
   // Движок нужен, если включён ambient ИЛИ энтрейнмент.
   const engineOn = enabled || entrainment;
 
@@ -71,17 +61,4 @@ export function useBreathingAudio({
   useEffect(() => {
     if (engineOn) setEntrainment(entrainment, entrainmentHz);
   }, [engineOn, entrainment, entrainmentHz]);
-
-  return {
-    unlock: async () => {
-      await ensureAudio(preset, volume);
-    },
-    onPhase: (phase, durationSec) => {
-      if (enabled) onBreathPhase(phase, durationSec);
-      else if (phaseSound) playPhaseCue(phase, durationSec);
-    },
-    stop: () => {
-      stopAmbient();
-    },
-  };
 }

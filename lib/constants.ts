@@ -58,7 +58,6 @@ export const DEFAULT_PROGRESSION: ProgressionState = {
 export const DEFAULT_BREATHING_PATTERN: [number, number, number, number] = [4, 4, 4, 4];
 
 export const DEFAULT_SETTINGS: UserSettings = {
-  soundEnabled: true,
   ambientEnabled: false,
   ambientPreset: 'ocean',
   ambientVolume: 0.5,

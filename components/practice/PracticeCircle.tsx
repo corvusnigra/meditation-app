@@ -3,6 +3,7 @@
 import { useEffect, useRef } from 'react';
 import { animate, motion, useMotionValue } from 'framer-motion';
 import { TONE, type Tone } from '@/components/ui/tones';
+import type { BreathingPhase } from '@/lib/types';
 import { cn } from '@/lib/utils';
 
 type Props = {
@@ -17,6 +18,13 @@ type Props = {
 };
 
 export const CIRCLE_REST_SCALE = 0.55;
+
+export const BREATH_SCALE: Record<BreathingPhase, number> = {
+  inhale: 1,
+  holdIn: 1,
+  exhale: CIRCLE_REST_SCALE,
+  holdOut: CIRCLE_REST_SCALE,
+};
 const STILL_SCALE = 0.85;
 const EASE = [0.4, 0, 0.2, 1] as const;
 

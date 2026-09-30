@@ -5,6 +5,7 @@ import type {
   CustomDurations,
   MotionPref,
   PhaseId,
+  PracticeUnit,
   ProgressionLevel,
   ProgressionState,
   Scenario,
@@ -37,6 +38,10 @@ function oneOf<T>(value: unknown, allowed: readonly T[]): value is T {
   return (allowed as readonly unknown[]).includes(value);
 }
 
+function isCount(value: unknown): value is number {
+  return Number.isInteger(value) && (value as number) >= 0;
+}
+
 function isFiniteNumber(value: unknown): value is number {
   return typeof value === 'number' && Number.isFinite(value);
 }
@@ -49,6 +54,7 @@ const SESSION_KINDS: readonly NonNullable<CompletedSession['kind']>[] = [
   'ritual',
   'technique',
 ];
+const UNITS: readonly PracticeUnit[] = ['cycle', 'round', 'group'];
 
 // Запись чинится, а не отбрасывается: при следующем сохранении список в хранилище
 // перезаписывается целиком, и отброшенное пропало бы навсегда. Спасти нельзя только
@@ -76,6 +82,18 @@ function repairSession(value: unknown, index: number): CompletedSession | null {
     // Неизвестный вид: запись с техникой остаётся техникой и не продлевает серию.
     if (typeof session.techniqueId === 'string') session.kind = 'technique';
     else delete session.kind;
+  }
+  // Счёт единиц показывается только целиком: без любой из трёх частей его нет.
+  if (
+    !isCount(session.done) ||
+    !isCount(session.planned) ||
+    session.planned < 1 ||
+    session.done > session.planned ||
+    !oneOf(session.unit, UNITS)
+  ) {
+    delete session.done;
+    delete session.planned;
+    delete session.unit;
   }
   return session as CompletedSession;
 }
@@ -111,7 +129,6 @@ export function normalizeSettings(raw: unknown): UserSettings {
   const bool = (value: unknown, fallback: boolean): boolean =>
     typeof value === 'boolean' ? value : fallback;
   return {
-    soundEnabled: bool(raw.soundEnabled, d.soundEnabled),
     ambientEnabled: bool(raw.ambientEnabled, d.ambientEnabled),
     ambientPreset: oneOf(raw.ambientPreset, AMBIENT_PRESETS)
       ? raw.ambientPreset

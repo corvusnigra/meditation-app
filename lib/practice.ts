@@ -3,10 +3,12 @@ import type {
   BreathingPhase,
   BreathingTechnique,
   CompletedSession,
+  PhaseId,
   PracticeUnit,
   ProgressionLevel,
   TechniqueKind,
 } from './types';
+import { plural } from './utils';
 
 export type PhaseDef<Id extends string = string> = { id: Id; sec: number };
 
@@ -93,6 +95,28 @@ export function minUnits(kind: TechniqueKind, planned: number): number {
 // Фаза ритуала засчитывается, если пройдена хотя бы половина.
 export function phaseCounted(done: number, planned: number): boolean {
   return planned > 0 && done >= Math.ceil(planned / 2);
+}
+
+// Ритуал попадает в историю, если засчитаны хотя бы две фазы из трёх.
+export function ritualCounted(phases: readonly PhaseId[]): boolean {
+  return phases.length >= 2;
+}
+
+const UNIT_FORMS: Record<PracticeUnit, [string, string, string]> = {
+  cycle: ['цикл', 'цикла', 'циклов'],
+  round: ['раунд', 'раунда', 'раундов'],
+  group: ['группа', 'группы', 'групп'],
+};
+
+// «5 циклов», «1 раунд».
+export function unitsLabel(count: number, unit: PracticeUnit): string {
+  return `${count} ${plural(count, UNIT_FORMS[unit])}`;
+}
+
+// «5 из 8 циклов», «2 из 21 цикла».
+export function unitsOfLabel(done: number, planned: number, unit: PracticeUnit): string {
+  const [, few, many] = UNIT_FORMS[unit];
+  return `${done} из ${planned} ${plural(planned, [few, many, many])}`;
 }
 
 export type TechniqueResult = {
